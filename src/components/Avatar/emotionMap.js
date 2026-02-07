@@ -26,7 +26,7 @@ export const EMOTION_MAP = {
 
   silent: {
     eye: "silent",
-    lip: "happy",
+    lip: "silent",
   },
 
   // future examples (NOT active yet)

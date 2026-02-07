@@ -10,5 +10,5 @@ export const LIPS = {
   happy: { x: 350, y: 485, w: 58.38,  h: 10 },
   angry: { x: 325, y: 477, w: 107.5,  h: 31 },
   sad:   { x: 352, y: 487, w: 54,     h: 8 },
-  silent: { x: 350, y: 485, w: 58.38,  h: 10 },
+  silent: { x: 352, y: 488, w: 54,  h: 6.35 },
 };
