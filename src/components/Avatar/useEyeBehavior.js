@@ -116,7 +116,7 @@ export function useEyeBehavior({
     // vertical micro drift
     gsap.to(eyeRef.current, {
       y: "+=0.6",
-      duration: 2.1,
+      duration: 2,
       repeat: -1,
       yoyo: true,
       ease: "cubic-bezier(0.16, 1, 0.3, 1)",
