@@ -29,7 +29,45 @@ export const EMOTION_MAP = {
     lip: "silent",
   },
 
-  // future examples (NOT active yet)
-  // tired: { eye: "silent", lip: "sad" },
-  // sarcastic: { eye: "happy", lip: "angry" },
+  disgust: {
+    eye: "sad",
+    lip: "angry",
+  },
+
+  sarcastic: {
+    eye: "happy",
+    lip: "angry",
+  },
+
+  tired: {
+    eye: "silent",
+    lip: "sad",
+  },
+
+  conflicted: {
+  eye: "sad",
+  lip: "happy",
+},
+
+overwhelmed: {
+  eye: "sad",
+  lip: "silent",
+},
+
+bittersweet: {
+  eye: "sad",
+  lip: "happy",
+},
+
+anxious: {
+  eye: "angry",
+  lip: "silent",
+},
+
+frustrated: {
+  eye: "angry",
+  lip: "sad",
+},
+
+  
 };
