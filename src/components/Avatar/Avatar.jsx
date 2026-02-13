@@ -5,34 +5,36 @@ import { useEyeBehavior } from "./useEyeBehavior";
 import { useLipBehavior } from "./useLipBehavior";
 import "./Avatar.css";
 
-export default function Avatar() {
+export default function Avatar({ emotion = "silent" }) {
   const eyeRef = useRef(null);
   const lipRef = useRef(null);
 
-  const [emotion, setEmotion] = useState("happy");
+  // Safe fallback: use silent if emotion not in map (prevents crash on composite emotions)
+  const map = EMOTION_MAP[emotion] ?? EMOTION_MAP.silent;
 
-  // 🔴 eye must be stateful for blink
-  const [eye, setEye] = useState(EMOTION_MAP[emotion].eye);
-  const [lip, setLip] = useState(EMOTION_MAP[emotion].lip);
+  // visual-only state
+  const [eye, setEye] = useState(map.eye);
+  const [lip, setLip] = useState(map.lip);
 
-  // 🔄 when emotion changes, update base eye/lip
+  // 🔑 PROP → VISUAL SYNC
   useEffect(() => {
-    const map = EMOTION_MAP[emotion];
-    setEye(map.eye);
-    setLip(map.lip);
+    const safeMap = EMOTION_MAP[emotion] ?? EMOTION_MAP.silent;
+    setEye(safeMap.eye);
+    setLip(safeMap.lip);
   }, [emotion]);
 
   useEyeBehavior({
     eyeRef,
     eye,
-    setEye,   // 🔴 REQUIRED for blink
+    setEye,
     emotion,
   });
 
   useLipBehavior({
-    emotion,
     lipRef,
+    lip,
     setLip,
+    emotion,
   });
 
   const eyeStyle = EYES[eye];
@@ -42,7 +44,6 @@ export default function Avatar() {
     <div className="avatar">
       <img className="skin" src="/svg/skin.svg" />
 
-      {/* EYES */}
       <img
         ref={eyeRef}
         className="eyes"
@@ -55,7 +56,6 @@ export default function Avatar() {
         }}
       />
 
-      {/* LIPS */}
       <div
         className="avatar_lip_slot"
         style={{
@@ -70,19 +70,10 @@ export default function Avatar() {
           ref={lipRef}
           className="avatar_lips"
           src={`/svg/lips/${lip}-lip.svg`}
-          alt=""
         />
       </div>
 
       <img className="body" src="/svg/body.svg" />
-
-      {/* TEMP CONTROLS */}
-      <div className="mood-controls">
-        <button onClick={() => setEmotion("happy")}>Happy</button>
-        <button onClick={() => setEmotion("angry")}>Angry</button>
-        <button onClick={() => setEmotion("sad")}>Sad</button>
-        <button onClick={() => setEmotion("silent")}>Silent</button>
-      </div>
     </div>
   );
 }
