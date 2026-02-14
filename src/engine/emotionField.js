@@ -276,6 +276,19 @@ export function updateEmotionField(prev, ai, deltaMs = 1000) {
    Architecture: Composite → Base Dominance
 ============================== */
 export function getDominantEmotion(field, current) {
+
+  // ==============================
+// 0️⃣ Natural Rest State (Energy Check)
+// If emotional energy is very low → silent
+// ==============================
+
+const emotionalEnergy =
+  field.happy + field.sad + field.angry;
+
+if (emotionalEnergy < 0.15) {
+  return "silent";
+}
+
   // 1️⃣ Composite resolution FIRST (engine-derived only)
   const composite = resolveCompositeEmotion(field);
   if (composite) return composite;

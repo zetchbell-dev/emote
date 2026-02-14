@@ -427,6 +427,29 @@ const KEYWORDS = {
   ],
 };
 
+const GREETINGS = [
+  "hi", "hello", "hey", "yo", "good morning",
+  "good evening", "good afternoon"
+];
+
+
+function detectTargetedAttack(text) {
+  const lower = text.toLowerCase();
+
+  const familyTargets = ["mom", "mother", "dad", "father", "family"];
+  const strongInsults = ["ugly", "stupid", "idiot", "worthless"];
+
+  const targetsFamily = familyTargets.some(w => lower.includes(w));
+  const hasStrongInsult = strongInsults.some(w => lower.includes(w));
+
+  if (targetsFamily && hasStrongInsult) {
+    return true;
+  }
+
+  return false;
+}
+
+
 function detectNuance(text) {
   const lower = text.toLowerCase();
 
@@ -454,6 +477,19 @@ export async function interpretEmotion(text) {
     };
   }
 
+  const lower = text.toLowerCase().trim();
+
+// Greeting override
+if (GREETINGS.includes(lower)) {
+  return {
+    emotion: "happy",
+    intensity: 0.6,
+    confidence: 0.9,
+    source: "greeting-override",
+  };
+}
+
+
   try {
     const model = await getModel();
     const result = await model(text);
@@ -470,17 +506,30 @@ export async function interpretEmotion(text) {
 
     // NEGATIVE → nuance
     else if (label === "NEGATIVE") {
-      const nuance = detectNuance(text);
 
-      if (nuance === "angry") {
-        emotion = "angry";
-      } else {
-        emotion = "sad";
-      }
+  // 1️⃣ Targeted personal attack → ANGRY
+  if (detectTargetedAttack(text)) {
+    emotion = "angry";
+    intensity = Math.max(score, 0.85); // force stronger reaction
+  }
+
+  // 2️⃣ Regular nuance detection
+  else {
+    const nuance = detectNuance(text);
+
+    if (nuance === "angry") {
+      emotion = "angry";
+    } else {
+      emotion = "sad";
     }
+  }
+}
+
 
     // very short input → silent
-    if (text.trim().length <= 2) {
+    const SILENT_WORDS = ["...", "hmm", "uh", "um", "idk"];
+
+    if (SILENT_WORDS.includes(lower)) {
       emotion = "silent";
       intensity = 0.4;
       confidence = 0.8;
