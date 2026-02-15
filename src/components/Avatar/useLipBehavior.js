@@ -1,6 +1,8 @@
 // src/components/Avatar/useLipBehavior.js
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { EMOTION_MAP } from "./emotionMap";
+
 
 /* ==================================================
    EMOTION WEIGHT (ZOOM FEEL)
@@ -106,7 +108,9 @@ export function useLipBehavior({ emotion, lipRef, setLip }) {
     if (isAnimatingRef.current) return;
 
     const from = prevEmotionRef.current;
-    const to = emotion;
+    const safeMap = EMOTION_MAP[emotion] ?? EMOTION_MAP.silent;
+const to = safeMap.lip;
+
     if (from === to) return;
 
     /* =============================================

@@ -616,7 +616,6 @@ import {
   getDominantEmotion,
 } from "../engine/emotionField";
 import { clampEmotion } from "../engine/clampEmotion";
-import { decayEmotionField } from "../engine/decay";
 import { EMOTION_CONFIG } from "../config/emotionConfig";
 import { useEmotionHistory } from "../hooks/useEmotionHistory";
 
@@ -627,21 +626,36 @@ export function useEmotionController() {
     happy: 0,
     sad: 0,
     angry: 0,
-    silent: 0,
   });
 
   const lastUpdateRef = useRef(Date.now());
   const emotionLockRef = useRef(0);
 
-  /* Passive Decay */
-  useEffect(() => {
-    const id = setInterval(() => {
-      setEmotionField((prev) => decayEmotionField(prev));
-    }, EMOTION_CONFIG.DECAY_INTERVAL_MS);
+  /* ==========================================
+   Passive Time Tick (drives decay only)
+========================================== */
+useEffect(() => {
+  const id = setInterval(() => {
+    const now = Date.now();
+    const deltaMs = now - lastUpdateRef.current;
+    lastUpdateRef.current = now;
 
-    return () => clearInterval(id);
-  }, []);
+    // No emotional injection
+    const passiveAI = {
+      emotion: null,
+      intensity: 0,
+      confidence: 1,
+    };
 
+    setEmotionField((prev) =>
+      updateEmotionField(prev, passiveAI, deltaMs)
+    );
+  }, EMOTION_CONFIG.DECAY_INTERVAL_MS);
+
+  return () => clearInterval(id);
+}, []);
+
+  
   /* Field → Emotion Sync */
   useEffect(() => {
     const now = Date.now();

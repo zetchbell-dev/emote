@@ -1,6 +1,8 @@
 // src/components/Avatar/useEyeBehavior.js
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
+import { EMOTION_MAP } from "./emotionMap";
+
 
 export function useEyeBehavior({
   eyeRef,
@@ -74,7 +76,9 @@ export function useEyeBehavior({
   useEffect(() => {
     if (emotion === prevEyeRef.current) return;
 
-    pendingEyeRef.current = emotion;
+    const safeMap = EMOTION_MAP[emotion] ?? EMOTION_MAP.silent;
+pendingEyeRef.current = safeMap.eye;
+
 
     // 🔴 reset timer so blink timing feels natural
     clearTimeout(blinkTimeoutRef.current);

@@ -1,106 +1,111 @@
-  // src/engine/emotionComposite.js
+// src/engine/emotionComposite.js
 
-  import { EMOTION_CONFIG } from "../config/emotionConfig";
+import { EMOTION_CONFIG } from "../config/emotionConfig";
 
-  /**
-   * Composite emotion resolver.
-   * Pure physics. No AI logic.
-   * 
-   * Checks field thresholds in priority order.
-   * Returns composite emotion if thresholds met, else null.
-   */
-  export function resolveCompositeEmotion(field) {
-    const C = EMOTION_CONFIG.COMPOSITE_THRESHOLD;
+/**
+ * Composite Emotion Resolver
+ *
+ * Uses ONLY base emotions:
+ * happy, sad, angry
+ *
+ * Silent is NOT part of composite logic.
+ * Silent is derived from low total energy.
+ */
 
-    // Priority order: most complex → simplest
+export function resolveCompositeEmotion(field) {
+  const {
+    happy = 0,
+    sad = 0,
+    angry = 0,
+  } = field;
 
-    /* ==============================
-      CONFLICTED
-      All three base emotions elevated
-    ============================== */
-    if (
-      field.happy >= C.conflicted.happy &&
-      field.sad >= C.conflicted.sad &&
-      field.angry >= C.conflicted.angry
-    ) {
-      return "conflicted";
-    }
+  const C = EMOTION_CONFIG.COMPOSITE_THRESHOLD;
 
-    /* ==============================
-      OVERWHELMED
-      High levels across happy/sad/angry
-    ============================== */
-    if (
-      field.happy >= C.overwhelmed.happy &&
-      field.sad >= C.overwhelmed.sad &&
-      field.angry >= C.overwhelmed.angry
-    ) {
-      return "overwhelmed";
-    }
+  /* =====================================================
+     PRIORITY ORDER (complex → simple)
+  ===================================================== */
 
-    /* ==============================
-      DISGUST
-      Strong anger + sustained sadness
-    ============================== */
-    if (
-      field.sad >= C.disgust.sad &&
-      field.angry >= C.disgust.angry
-    ) {
-      return "disgust";
-    }
-
-    /* ==============================
-      BITTERSWEET
-      Mixed happiness and sadness
-    ============================== */
-    if (
-      field.happy >= C.bittersweet.happy &&
-      field.sad >= C.bittersweet.sad
-    ) {
-      return "bittersweet";
-    }
-
-    /* ==============================
-      SARCASTIC
-      Light happiness + rising anger
-    ============================== */
-    if (
-      field.happy >= C.sarcastic.happy &&
-      field.angry >= C.sarcastic.angry
-    ) {
-      return "sarcastic";
-    }
-
-    /* ==============================
-      ANXIOUS
-      Sadness + silence
-    ============================== */
-    if (
-      field.sad >= C.anxious.sad &&
-      field.silent >= C.anxious.silent
-    ) {
-      return "anxious";
-    }
-
-    /* ==============================
-      FRUSTRATED
-      Anger + silence
-    ============================== */
-    if (
-      field.angry >= C.frustrated.angry &&
-      field.silent >= C.frustrated.silent
-    ) {
-      return "frustrated";
-    }
-
-    /* ==============================
-      TIRED
-      High silent + background sadness
-      (Not in config, using legacy threshold)
-    ============================== */
-    if (field.silent > 0.6 && field.sad > 0.3) {
-      return "tired";
-    }
-
-    return null;
+  /* ==============================
+     1️⃣ CONFLICTED
+     All three elevated
+  ============================== */
+  if (
+    happy >= C.conflicted.happy &&
+    sad >= C.conflicted.sad &&
+    angry >= C.conflicted.angry
+  ) {
+    return "conflicted";
   }
+
+  /* ==============================
+     2️⃣ OVERWHELMED
+     Strong intensity across spectrum
+  ============================== */
+  if (
+    happy >= C.overwhelmed.happy &&
+    sad >= C.overwhelmed.sad &&
+    angry >= C.overwhelmed.angry
+  ) {
+    return "overwhelmed";
+  }
+
+  /* ==============================
+     3️⃣ DISGUST
+     High sadness + high anger
+  ============================== */
+  if (
+    sad >= C.disgust.sad &&
+    angry >= C.disgust.angry
+  ) {
+    return "disgust";
+  }
+
+  /* ==============================
+     4️⃣ BITTERSWEET
+     Happiness + sadness
+  ============================== */
+  if (
+    happy >= C.bittersweet.happy &&
+    sad >= C.bittersweet.sad
+  ) {
+    return "bittersweet";
+  }
+
+  /* ==============================
+     5️⃣ SARCASTIC
+     Light happiness + rising anger
+  ============================== */
+  if (
+    happy >= C.sarcastic.happy &&
+    angry >= C.sarcastic.angry
+  ) {
+    return "sarcastic";
+  }
+
+  /* ==============================
+     6️⃣ ANXIOUS (redefined)
+     High sadness + medium anger
+  ============================== */
+  if (
+    sad >= 0.55 &&
+    angry >= 0.30
+  ) {
+    return "anxious";
+  }
+
+  /* ==============================
+     7️⃣ FRUSTRATED (redefined)
+     High anger + medium sadness
+  ============================== */
+  if (
+    angry >= 0.55 &&
+    sad >= 0.30
+  ) {
+    return "frustrated";
+  }
+
+  /* ==============================
+     No composite matched
+  ============================== */
+  return null;
+}
