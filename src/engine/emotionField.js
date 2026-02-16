@@ -1,262 +1,18 @@
-// // src/engine/emotionField.js
-
-// export function updateEmotionField(prev, ai, deltaMs = 1000) {
-//   const next = { ...prev };
-
-//   /* -----------------------------
-//      Time-aware decay
-//   ----------------------------- */
-//   const decayFactor = Math.pow(0.85, deltaMs / 2000);
-
-//   Object.keys(next).forEach((k) => {
-//     next[k] *= decayFactor;
-//   });
-
-//   /* -----------------------------
-//      Add emotion pressure
-//   ----------------------------- */
-//   const gain =
-//   ai.emotion === "happy" ? ai.intensity * 0.7 : ai.intensity;
-
-// next[ai.emotion] += gain;
-
-
-//   /* -----------------------------
-//      Silent emergence (soft)
-//   ----------------------------- */
-//   if (ai.emotion === "silent") {
-//   next.silent += ai.intensity * 0.6;
-// }
-
-
-//   // If user is expressive, gently reduce silent
-//   if (ai.emotion === "happy") {
-//   next.silent *= 0.75;
-// }
-
-
-//   return clamp(next);
-// }
-
-// /* =============================
-//    DOMINANT EMOTION LOGIC
-//    🔴 THIS IS THE FIX
-// ============================= */
-// export function getDominantEmotion(field, current) {
-//   const sorted = Object.entries(field).sort((a, b) => b[1] - a[1]);
-//   const [top, second] = sorted;
-
-//   /* ---------------------------------
-//      ✅ ALLOW FIRST EXIT FROM SILENT
-//   --------------------------------- */
-//   if (current === "silent" && top[0] !== "silent") {
-//     return top[0];
-//   }
-
-//   /* ---------------------------------
-//      Inertia (after first change)
-//   --------------------------------- */
-//   if (top[1] - second[1] < 0.08) {
-//     return current;
-//   }
-
-//   return top[0];
-// }
-
-// /* -----------------------------
-//    Clamp field values
-// ----------------------------- */
-// function clamp(field) {
-//   Object.keys(field).forEach((k) => {
-//     field[k] = Math.max(0, Math.min(1, field[k]));
-//   });
-//   return field;
-// }
-
-
-
-// // src/engine/emotionField.js
-// import { EMOTION_CONFIG } from "../config/emotionConfig";
-
-// export function updateEmotionField(prev, ai, deltaMs = 1000) {
-//   const next = { ...prev };
-
-//   const decayFactor = Math.pow(
-//     EMOTION_CONFIG.TIME_DECAY_FACTOR,
-//     deltaMs / EMOTION_CONFIG.DECAY_INTERVAL_MS
-//   );
-
-//   Object.keys(next).forEach((k) => {
-//     next[k] *= decayFactor;
-//   });
-
-//   const gain =
-//     ai.intensity *
-//     (EMOTION_CONFIG.GAIN_MULTIPLIER[ai.emotion] ?? 1);
-
-//   next[ai.emotion] = Math.min(1, next[ai.emotion] + gain);
-
-//   return next;
-// }
-
-// export function getDominantEmotion(field, current) {
-//   const sorted = Object.entries(field).sort((a, b) => b[1] - a[1]);
-//   const [top, second] = sorted;
-
-//   const currentValue = field[current];
-//   const topValue = top[1];
-
-//   // allow exit from silent
-//   if (current === "silent" && top[0] !== "silent") {
-//     if (topValue > EMOTION_CONFIG.DOMINANCE_THRESHOLD) {
-//       return top[0];
-//     }
-//   }
-
-//   // hysteresis
-//   if (top[0] !== current) {
-//     if (topValue - currentValue < EMOTION_CONFIG.DOMINANCE_THRESHOLD) {
-//       return current;
-//     }
-//   }
-
-//   if (topValue - second[1] < EMOTION_CONFIG.HYSTERESIS_THRESHOLD) {
-//     return current;
-//   }
-
-//   return top[0];
-// }
-
-
-
-// src/engine/emotionField.js
-
+ 
 // import { EMOTION_CONFIG } from "../config/emotionConfig";
 // import { resolveCompositeEmotion } from "./emotionComposite";
 
 // /* =====================================================
 //    UPDATE EMOTION FIELD
-//    - Time-aware decay
-//    - AI pressure injection
-//    - Safe clamping
+//    - Applies exponential time-based decay
+//    - Injects AI emotional pressure safely
+//    - Only base emotions are stored
 // ===================================================== */
 // export function updateEmotionField(prev, ai, deltaMs = 1000) {
 //   const next = { ...prev };
 
 //   /* -----------------------------
-//      Time-based exponential decay
-//   ----------------------------- */
-//   const decayFactor = Math.pow(
-//     EMOTION_CONFIG.TIME_DECAY_FACTOR,
-//     deltaMs / EMOTION_CONFIG.DECAY_INTERVAL_MS
-//   );
-
-//   Object.keys(next).forEach((k) => {
-//     next[k] *= decayFactor;
-//   });
-
-//   /* -----------------------------
-//      AI pressure injection
-//   ----------------------------- */
-//   const gain =
-//     ai.intensity *
-//     (EMOTION_CONFIG.GAIN_MULTIPLIER?.[ai.emotion] ?? 1);
-
-//   if (ai.emotion in next) {
-//     next[ai.emotion] += gain;
-//   }
-
-//   return clampBaseEmotions(next);
-// }
-
-// /* =====================================================
-//    DOMINANT EMOTION LOGIC
-//    - Composite priority
-//    - Silent escape logic
-//    - Dominance threshold
-//    - Hysteresis protection
-// ===================================================== */
-// export function getDominantEmotion(field, current) {
-//   // 1️⃣ Composite first (disgust etc.)
-//   const composite = resolveCompositeEmotion(field);
-//   if (composite) return composite;
-
-//   const entries = Object.entries(field);
-
-//   if (!entries.length) return current;
-
-//   const sorted = entries.sort((a, b) => b[1] - a[1]);
-//   const [top, second = [null, 0]] = sorted;
-
-//   const currentValue = field[current] ?? 0;
-//   const topValue = top[1];
-
-//   /* -----------------------------
-//      Controlled exit from silent
-//   ----------------------------- */
-//   if (current === "silent" && top[0] !== "silent") {
-//     if (topValue > EMOTION_CONFIG.DOMINANCE_THRESHOLD) {
-//       return top[0];
-//     }
-//   }
-
-//   /* -----------------------------
-//      Dominance threshold guard
-//   ----------------------------- */
-//   if (top[0] !== current) {
-//     if (
-//       topValue - currentValue <
-//       EMOTION_CONFIG.DOMINANCE_THRESHOLD
-//     ) {
-//       return current;
-//     }
-//   }
-
-//   /* -----------------------------
-//      Hysteresis (anti flicker)
-//   ----------------------------- */
-//   if (
-//     topValue - second[1] <
-//     EMOTION_CONFIG.HYSTERESIS_THRESHOLD
-//   ) {
-//     return current;
-//   }
-
-//   return top[0];
-// }
-
-// /* =====================================================
-//    Clamp only base emotions
-//    (protects future composite expansions)
-// ===================================================== */
-// function clampBaseEmotions(field) {
-//   const BASE_EMOTIONS = ["happy", "sad", "angry", "silent"];
-
-//   BASE_EMOTIONS.forEach((k) => {
-//     if (k in field) {
-//       field[k] = Math.max(0, Math.min(1, field[k]));
-//     }
-//   });
-
-//   return field;
-// }
-
-
-// src/engine/emotionField.js
-
-// import { EMOTION_CONFIG } from "../config/emotionConfig";
-// import { resolveCompositeEmotion } from "./emotionComposite";
-
-// /* =====================================================
-//    UPDATE FIELD
-//    - Applies time-based decay
-//    - Injects AI pressure safely
-// ===================================================== */
-// export function updateEmotionField(prev, ai, deltaMs = 1000) {
-//   const next = { ...prev };
-
-//   /* -----------------------------
-//      1️⃣ Time-based exponential decay
+//      1️⃣ Time-based decay
 //   ----------------------------- */
 //   const decayFactor = Math.pow(
 //     EMOTION_CONFIG.TIME_DECAY_FACTOR,
@@ -274,7 +30,6 @@
 //     (ai?.intensity ?? 0) *
 //     (EMOTION_CONFIG.GAIN_MULTIPLIER?.[ai?.emotion] ?? 1);
 
-//   // 🔒 Only inject valid base emotions
 //   if (ai?.emotion && ai.emotion in next) {
 //     next[ai.emotion] = Math.min(1, next[ai.emotion] + gain);
 //   }
@@ -284,7 +39,10 @@
 
 // /* =====================================================
 //    DOMINANT EMOTION LOGIC
-//    Architecture: Composite → Base Dominance
+//    Architecture:
+//    1. Silent (low total energy)
+//    2. Composite (high mixed energy)
+//    3. Base dominance (normalized + hysteresis)
 // ===================================================== */
 // export function getDominantEmotion(field, current) {
 //   const {
@@ -294,40 +52,38 @@
 //   } = field;
 
 //   /* -----------------------------
-//      1️⃣ Total emotional energy
+//      1️⃣ Total energy
 //   ----------------------------- */
 //   const totalEnergy = happy + sad + angry;
 
-//   /* -----------------------------
-//      2️⃣ Silent is natural rest state
-//   ----------------------------- */
-//   if (totalEnergy < 0.15) {
-//     return "silent";
-//   }
+// /* -----------------------------
+//    1️⃣ Silent (low energy)
+// ----------------------------- */
+// if (totalEnergy < 0.15) {
+//   return "silent";
+// }
 
-//   /* -----------------------------
-//      3️⃣ Composite resolution
-//   ----------------------------- */
-//   const composite = resolveCompositeEmotion(field);
-  
-//   // 🔒 If currently composite, require stronger reason to exit
-//   if (current && composite === current) {
+// /* -----------------------------
+//    2️⃣ Normalize BEFORE composite
+// ----------------------------- */
+// const normalized = {
+//   happy: happy / totalEnergy,
+//   sad: sad / totalEnergy,
+//   angry: angry / totalEnergy,
+// };
+
+// /* -----------------------------
+//    3️⃣ Composite resolution
+//    (use normalized values)
+// ----------------------------- */
+// const composite = resolveCompositeEmotion(normalized);
+
+// if (composite) {
+//   if (current === composite) {
 //     return current;
 //   }
-
-//   if (composite && current !== composite) {
-//     return composite;
-//   }
-
-
-//   /* -----------------------------
-//      4️⃣ Normalize energies
-//   ----------------------------- */
-//   const normalized = {
-//     happy: happy / totalEnergy,
-//     sad: sad / totalEnergy,
-//     angry: angry / totalEnergy,
-//   };
+//   return composite;
+// }
 
 //   const sorted = Object.entries(normalized)
 //     .sort((a, b) => b[1] - a[1]);
@@ -338,17 +94,20 @@
 //   /* -----------------------------
 //      5️⃣ Hysteresis protection
 //   ----------------------------- */
-//   if (current !== "silent" && current in normalized) {
+//   if (current in normalized) {
 //     const currentValue = normalized[current];
 
+//     // Prevent small dominance flips
 //     if (
 //       topEmotion !== current &&
-//       topValue - currentValue < EMOTION_CONFIG.DOMINANCE_THRESHOLD
+//       topValue - currentValue <
+//         EMOTION_CONFIG.DOMINANCE_THRESHOLD
 //     ) {
 //       return current;
 //     }
 //   }
 
+//   // Prevent micro-flicker between top two
 //   if (
 //     topValue - secondValue <
 //     EMOTION_CONFIG.HYSTERESIS_THRESHOLD
@@ -359,115 +118,270 @@
 //   return topEmotion;
 // }
 
+
+// import { EMOTION_CONFIG } from "../config/emotionConfig";
+
+// /* =====================================================
+//    UPDATE EMOTION FIELD (MODEL 3 - NO SILENT BASE)
+// ===================================================== */
+// export function updateEmotionField(prev, ai, deltaMs = 1000) {
+//   const next = { ...prev };
+
+//   /* -----------------------------
+//      1️⃣ Decay BASE ONLY
+//   ----------------------------- */
+//   const decayFactor = Math.pow(
+//     EMOTION_CONFIG.TIME_DECAY_FACTOR,
+//     deltaMs / EMOTION_CONFIG.DECAY_INTERVAL_MS
+//   );
+
+//   const BASE = ["happy", "sad", "angry"];
+
+//   BASE.forEach((k) => {
+//     next[k] = clamp01(next[k] * decayFactor);
+//   });
+
+//   /* -----------------------------
+//     2️⃣ Multi-force AI injection
+//   ----------------------------- */
+//   next.happy = clamp01(
+//     next.happy + (ai?.happy ?? 0) *
+//     (EMOTION_CONFIG.GAIN_MULTIPLIER?.happy ?? 1)
+//   );
+
+//   next.sad = clamp01(
+//     next.sad + (ai?.sad ?? 0) *
+//     (EMOTION_CONFIG.GAIN_MULTIPLIER?.sad ?? 1)
+//   );
+
+//   next.angry = clamp01(
+//     next.angry + (ai?.angry ?? 0) *
+//     (EMOTION_CONFIG.GAIN_MULTIPLIER?.angry ?? 1)
+//   );
+
+
+//   /* -----------------------------
+//      3️⃣ Composite energies
+//   ----------------------------- */
+//   const COMPOSITE_BOOST = 1.08; // small dominance bias
+
+
+//   next.bittersweet =
+//   clamp01(composite(next.happy, next.sad) * COMPOSITE_BOOST);
+
+// next.disgust =
+//   clamp01(composite(next.sad, next.angry) * COMPOSITE_BOOST);
+
+// next.sarcastic =
+//   clamp01(composite(next.happy * 0.8, next.angry) * COMPOSITE_BOOST);
+
+// next.conflicted =
+//   clamp01(composite(
+//     next.happy,
+//     next.sad,
+//     next.angry
+//   ) * COMPOSITE_BOOST);
+
+// next.overwhelmed =
+//   clamp01(composite(
+//     next.happy * 0.9,
+//     next.sad * 0.9,
+//     next.angry * 0.9
+//   ) * COMPOSITE_BOOST);
+
+
+//   // Without silent base:
+//   // anxious, frustrated, tired no longer make sense
+//   // unless you reintroduce silent tension.
+
+//   return next;
+// }
+
+// /* =====================================================
+//    DOMINANT EMOTION
+// ===================================================== */
+// export function getDominantEmotion(field, current) {
+
+//   const {
+//     happy = 0,
+//     sad = 0,
+//     angry = 0,
+//   } = field;
+
+//   const baseEnergy = happy + sad + angry;
+
+//   /* -----------------------------
+//      Rest state (silent)
+//   ----------------------------- */
+//   if (baseEnergy < 0.15) {
+//     return "silent";
+//   }
+
+//   /* -----------------------------
+//      Sort ALL energies
+//   ----------------------------- */
+//   const sorted = Object.entries(field)
+//     .sort((a, b) => b[1] - a[1]);
+
+//   const [topEmotion, topValue] = sorted[0];
+//   const [, secondValue = 0] = sorted[1] ?? [];
+
+//   const currentValue = field[current] ?? 0;
+
+//   /* Dominance guard */
+//   if (
+//     topEmotion !== current &&
+//     topValue - currentValue <
+//       EMOTION_CONFIG.DOMINANCE_THRESHOLD
+//   ) {
+//     return current;
+//   }
+
+//   /* Hysteresis */
+//   if (
+//     topValue - secondValue <
+//     EMOTION_CONFIG.HYSTERESIS_THRESHOLD
+//   ) {
+//     return current;
+//   }
+
+//   return topEmotion;
+// }
+
+// /* ===================================================== */
+
+// function composite(...values) {
+//   return Math.min(...values);
+// }
+
+// function clamp01(v) {
+//   return Math.max(0, Math.min(1, v));
+// }
+
+
+
 import { EMOTION_CONFIG } from "../config/emotionConfig";
-import { resolveCompositeEmotion } from "./emotionComposite";
 
 /* =====================================================
    UPDATE EMOTION FIELD
-   - Applies exponential time-based decay
-   - Injects AI emotional pressure safely
-   - Only base emotions are stored
+   - Base decay
+   - Multi-force AI injection
+   - Balance-weighted composite (Model 3 Proper)
 ===================================================== */
 export function updateEmotionField(prev, ai, deltaMs = 1000) {
   const next = { ...prev };
 
   /* -----------------------------
-     1️⃣ Time-based decay
+     1️⃣ Decay BASE ONLY
   ----------------------------- */
   const decayFactor = Math.pow(
     EMOTION_CONFIG.TIME_DECAY_FACTOR,
     deltaMs / EMOTION_CONFIG.DECAY_INTERVAL_MS
   );
 
-  Object.keys(next).forEach((k) => {
-    next[k] *= decayFactor;
+  const BASE = ["happy", "sad", "angry"];
+
+  BASE.forEach((k) => {
+    next[k] = clamp01((next[k] ?? 0) * decayFactor);
   });
 
   /* -----------------------------
-     2️⃣ Safe AI injection
+     2️⃣ Multi-force AI injection
   ----------------------------- */
-  const gain =
-    (ai?.intensity ?? 0) *
-    (EMOTION_CONFIG.GAIN_MULTIPLIER?.[ai?.emotion] ?? 1);
+  next.happy = clamp01(
+    next.happy + (ai?.happy ?? 0) *
+    (EMOTION_CONFIG.GAIN_MULTIPLIER?.happy ?? 1)
+  );
 
-  if (ai?.emotion && ai.emotion in next) {
-    next[ai.emotion] = Math.min(1, next[ai.emotion] + gain);
-  }
+  next.sad = clamp01(
+    next.sad + (ai?.sad ?? 0) *
+    (EMOTION_CONFIG.GAIN_MULTIPLIER?.sad ?? 1)
+  );
+
+  next.angry = clamp01(
+    next.angry + (ai?.angry ?? 0) *
+    (EMOTION_CONFIG.GAIN_MULTIPLIER?.angry ?? 1)
+  );
+
+  /* -----------------------------
+     3️⃣ Composite energies
+     (Balance-weighted Model 3)
+  ----------------------------- */
+
+  next.bittersweet =
+    clamp01(balanceComposite(next.happy, next.sad));
+
+  next.disgust =
+    clamp01(balanceComposite(next.sad, next.angry));
+
+  next.sarcastic =
+    clamp01(balanceComposite(next.happy * 0.8, next.angry));
+
+  next.conflicted =
+    clamp01(balanceComposite3(
+      next.happy,
+      next.sad,
+      next.angry
+    ));
+
+  next.overwhelmed =
+    clamp01(balanceComposite3(
+      next.happy * 0.9,
+      next.sad * 0.9,
+      next.angry * 0.9
+    ));
 
   return next;
 }
 
 /* =====================================================
-   DOMINANT EMOTION LOGIC
-   Architecture:
-   1. Silent (low total energy)
-   2. Composite (high mixed energy)
-   3. Base dominance (normalized + hysteresis)
+   DOMINANT EMOTION
+   - Silent if low base energy
+   - Sort all energies
+   - Apply dominance threshold + hysteresis
 ===================================================== */
 export function getDominantEmotion(field, current) {
+
   const {
     happy = 0,
     sad = 0,
     angry = 0,
   } = field;
 
+  const baseEnergy = happy + sad + angry;
+
   /* -----------------------------
-     1️⃣ Total energy
+     Silent = rest state
   ----------------------------- */
-  const totalEnergy = happy + sad + angry;
-
-/* -----------------------------
-   1️⃣ Silent (low energy)
------------------------------ */
-if (totalEnergy < 0.15) {
-  return "silent";
-}
-
-/* -----------------------------
-   2️⃣ Normalize BEFORE composite
------------------------------ */
-const normalized = {
-  happy: happy / totalEnergy,
-  sad: sad / totalEnergy,
-  angry: angry / totalEnergy,
-};
-
-/* -----------------------------
-   3️⃣ Composite resolution
-   (use normalized values)
------------------------------ */
-const composite = resolveCompositeEmotion(normalized);
-
-if (composite) {
-  if (current === composite) {
-    return current;
+  if (baseEnergy < 0.15) {
+    return "silent";
   }
-  return composite;
-}
 
-  const sorted = Object.entries(normalized)
+  /* -----------------------------
+     Sort ALL energies
+  ----------------------------- */
+  const sorted = Object.entries(field)
     .sort((a, b) => b[1] - a[1]);
 
   const [topEmotion, topValue] = sorted[0];
   const [, secondValue = 0] = sorted[1] ?? [];
 
-  /* -----------------------------
-     5️⃣ Hysteresis protection
-  ----------------------------- */
-  if (current in normalized) {
-    const currentValue = normalized[current];
+  const currentValue = field[current] ?? 0;
 
-    // Prevent small dominance flips
-    if (
-      topEmotion !== current &&
-      topValue - currentValue <
-        EMOTION_CONFIG.DOMINANCE_THRESHOLD
-    ) {
-      return current;
-    }
+  /* -----------------------------
+     Dominance threshold
+  ----------------------------- */
+  if (
+    topEmotion !== current &&
+    topValue - currentValue <
+      EMOTION_CONFIG.DOMINANCE_THRESHOLD
+  ) {
+    return current;
   }
 
-  // Prevent micro-flicker between top two
+  /* -----------------------------
+     Hysteresis protection
+  ----------------------------- */
   if (
     topValue - secondValue <
     EMOTION_CONFIG.HYSTERESIS_THRESHOLD
@@ -476,4 +390,30 @@ if (composite) {
   }
 
   return topEmotion;
+}
+
+/* =====================================================
+   Helpers
+===================================================== */
+
+function balanceComposite(a, b) {
+  const overlap = Math.min(a, b);
+  const maxVal = Math.max(a, b);
+  if (maxVal === 0) return 0;
+
+  const balance = overlap / maxVal;
+  return overlap * (1 + balance);
+}
+
+function balanceComposite3(a, b, c) {
+  const minVal = Math.min(a, b, c);
+  const maxVal = Math.max(a, b, c);
+  if (maxVal === 0) return 0;
+
+  const balance = minVal / maxVal;
+  return minVal * (1 + balance);
+}
+
+function clamp01(v) {
+  return Math.max(0, Math.min(1, v));
 }

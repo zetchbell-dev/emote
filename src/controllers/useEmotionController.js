@@ -626,6 +626,12 @@ export function useEmotionController() {
     happy: 0,
     sad: 0,
     angry: 0,
+
+    bittersweet: 0,
+  disgust: 0,
+  sarcastic: 0,
+  conflicted: 0,
+  overwhelmed: 0,
   });
 
   const lastUpdateRef = useRef(Date.now());
