@@ -1,16 +1,7 @@
-// src/components/EmotionTimeline.jsx
-
-/**
- * Emotional Timeline Graph
- * Shows field intensity over time.
- * 
- * Presentational only. Accepts precomputed history data.
- */
-
 export default function EmotionTimeline({ data = [] }) {
-  const width = 600;
-  const height = 180;
-  const padding = 20;
+  const width = 360;
+  const height = 120;
+  const padding = 8;
 
   const maxTime =
     data.length > 0
@@ -20,10 +11,24 @@ export default function EmotionTimeline({ data = [] }) {
   function scaleX(time) {
     return padding + (time / maxTime) * (width - padding * 2);
   }
+// Compute dynamic max value
+const maxValue = Math.max(
+  0.15, // prevents crazy amplification
+  ...data.flatMap(point => [
+    point.happy || 0,
+    point.sad || 0,
+    point.angry || 0,
+    point.silent || 0
+  ])
+);
 
-  function scaleY(value) {
-    return height - padding - value * (height - padding * 2);
-  }
+function scaleY(value) {
+  return (
+    height -
+    padding -
+    (value / maxValue) * (height - padding * 2)
+  );
+}
 
   function buildPath(key) {
     if (data.length === 0) return "";
@@ -38,50 +43,20 @@ export default function EmotionTimeline({ data = [] }) {
   }
 
   return (
-    <div style={{ padding: "20px" }}>
-      <h4 style={{ color: "#aaa", fontSize: "12px" }}>
-        Emotional Field Timeline
-      </h4>
+    <div className="timeline-container">
+      <div className="timeline-heading">
+        Emotion Timeline
+      </div>
 
       <svg
         width={width}
         height={height}
-        style={{
-          background: "#111",
-          borderRadius: "8px",
-        }}
+        className="timeline-svg"
       >
-        {/* Happy */}
-        <path
-          d={buildPath("happy")}
-          stroke="#4CAF50"
-          strokeWidth="2"
-          fill="none"
-        />
-
-        {/* Sad */}
-        <path
-          d={buildPath("sad")}
-          stroke="#2196F3"
-          strokeWidth="2"
-          fill="none"
-        />
-
-        {/* Angry */}
-        <path
-          d={buildPath("angry")}
-          stroke="#F44336"
-          strokeWidth="2"
-          fill="none"
-        />
-
-        {/* Silent */}
-        <path
-          d={buildPath("silent")}
-          stroke="#9E9E9E"
-          strokeWidth="2"
-          fill="none"
-        />
+        <path d={buildPath("happy")} stroke="#4CAF50" strokeWidth="1.5" fill="none" />
+        <path d={buildPath("sad")} stroke="#2196F3" strokeWidth="1.5" fill="none" />
+        <path d={buildPath("angry")} stroke="#F44336" strokeWidth="1.5" fill="none" />
+        <path d={buildPath("silent")} stroke="#9E9E9E" strokeWidth="1" fill="none" />
       </svg>
     </div>
   );
