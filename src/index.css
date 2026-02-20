@@ -1,78 +1,271 @@
-/* ================================
-   BASE RESET
-================================ */
 * {
   box-sizing: border-box;
 }
 
-body {
+html, body, #root {
   margin: 0;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #0b0b0b;
-  color: #ffffff;
+  padding: 0;
+  height: 100%;
+  background: #000;
+  font-family: system-ui, sans-serif;
+  color: #fff;
 }
 
-/* ================================
-   APP LAYOUT
-================================ */
-.app {
-  max-width: 420px;
-  margin: 0 auto;
-  padding: 16px;
+/* Hide scrollbar visually */
+body::-webkit-scrollbar {
+  display: none;
+}
+body {
+  scrollbar-width: none;
 }
 
-.avatar-zone {
-  height: 160px;
+/* Background stays fixed always */
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+
+  background-image: url("/background-columbina.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center 32%;
+
+  filter: brightness(0.8);
+}
+
+/* HERO */
+.hero {
+  position: relative;
+  height: 100vh;
+  z-index: 1;
+}
+
+/* Avatar center */
+.avatar-wrapper {
+  position: absolute;
+  top: 48%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.avatar {
+  width: min(45vw, 650px);
+  height: auto;
+}
+
+/* REVEAL SECTION */
+.reveal {
+  position: relative;
+  min-height: 100vh;
+  z-index: 2;
+
+  /* This is key — subtle overlay, not solid black */
+  background: linear-gradient(
+    to bottom,
+    rgba(0,0,0,0.0) 0%,
+    rgba(0,0,0,0.75) 30%,
+    rgba(0,0,0,0.95) 100%
+  );
+
   display: flex;
-  align-items: center;
   justify-content: center;
+  padding: 100px 20px 80px;
 }
 
-/* ================================
-   MESSAGE LIST
-================================ */
-.messages {
-  min-height: 120px;
-  margin-bottom: 12px;
-}
-
-.message {
-  opacity: 0.8;
-  margin-bottom: 6px;
-  font-size: 14px;
-}
-
-/* ================================
-   INPUT
-================================ */
-.input-box {
+.content-wrapper {
+  width: 600px;
+  max-width: 95%;
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 24px;
 }
 
-input {
-  flex: 1;
-  background: #111;
-  border: none;
-  padding: 10px;
-  color: white;
-  outline: none;
+
+/* =========================================
+   TIMELINE HUD STYLE
+========================================= */
+
+.timeline-container {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  z-index: 5;
+
+  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 10px 12px;
+  border-radius: 10px;
+
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.timeline-heading {
+  font-size: 9px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  opacity: 0.4;
+  margin-bottom: 6px;
+}
+
+.timeline-svg {
+  display: block;
+  opacity: 0.85;
+}
+
+
+
+/* =========================================
+   DEBUG PANEL — CINEMATIC STYLE
+========================================= */
+
+.debug {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+
+  backdrop-filter: blur(10px);
+  background: rgba(0, 0, 0, 0.4);
+
+  padding: 16px 18px;
+  border-radius: 14px;
+
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  min-width: 180px;
+}
+
+.debug-title {
+  font-size: 12px;
+  margin-bottom: 10px;
+  opacity: 0.8;
+}
+
+.debug-emotion {
+  color: #4CAF50;
+  font-weight: 600;
+}
+
+.debug-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.debug-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.debug-key {
+  text-transform: capitalize;
+}
+
+.debug-value {
+  font-family: monospace;
+  opacity: 0.85;
+}
+
+
+/* =========================================
+   CINEMATIC INPUT
+========================================= */
+
+.input-container {
+  position: relative;
+  width: 100%;
+  max-width: 520px;
+  margin: 0 auto;
+}
+
+.emotion-input {
+  width: 100%;
+  padding: 14px 90px 14px 18px;
+
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 999px;
+
+  color: #fff;
   font-size: 14px;
+
+  outline: none;
+  transition: all 0.25s ease;
 }
 
-button {
-  background: #222;
-  color: white;
-  border: none;
-  padding: 10px 14px;
-  cursor: pointer;
+.emotion-input::placeholder {
+  color: rgba(255, 255, 255, 0.5);
 }
+
+.emotion-input:focus {
+  border-color: rgba(255, 255, 255, 0.4);
+  background: rgba(255, 255, 255, 0.12);
+}
+
+/* SEND BUTTON INSIDE FIELD */
+
+.emotion-send {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+
+  padding: 8px 18px;
+  border-radius: 999px;
+
+  border: none;
+  cursor: pointer;
+
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  font-size: 13px;
+
+  transition: background 0.2s ease;
+}
+
+.emotion-send:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+@font-face {
+  font-family: "Nohemi";
+  src: url("/fonts/Nohemi-Regular.woff2") format("woff2");
+  font-weight: 400;
+}
+
+@font-face {
+  font-family: "Nohemi";
+  src: url("/fonts/Nohemi-Bold.woff2") format("woff2");
+  font-weight: 700;
+}
+
 
 /* ================================
-   DEBUG (DEV ONLY)
+   CINEMATIC MESSAGE SYSTEM
 ================================ */
-.debug {
-  margin-top: 12px;
-  font-size: 11px;
-  opacity: 0.35;
+.cinema-messages {
+  position: absolute;
+  bottom: 140px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 70%;
+  max-width: 800px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.cinema-message {
+  font-family: "Nohemi", sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: white;
+  text-align: center;
+
+  transition: all 0.6s ease;
 }

@@ -10,14 +10,17 @@ export default function EmotionInput({ onSubmit }) {
   }
 
   return (
-    <div className="input-box">
+    <div className="input-container">
       <input
-        placeholder="Write what you’re thinking…"
+        className="emotion-input"
+        placeholder="Unfiltered thoughts go here..."
         value={text}
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && submit()}
       />
-      <button onClick={submit}>Send</button>
+      <button className="emotion-send" onClick={submit}>
+        Send
+      </button>
     </div>
   );
 }

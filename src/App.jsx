@@ -8,28 +8,37 @@ import { useEmotionController } from "./controllers/useEmotionController";
 export default function App() {
   const {
     emotion,
-    messages,
     emotionField,
+    messages,
     submitText,
     timeline,
   } = useEmotionController();
 
   return (
-    <div style={{ background: "#000", minHeight: "100vh" }}>
-      {/* ✅ AVATAR (deterministic render) */}
-      <Avatar emotion={emotion || "silent"} />
+    <div className="app-container">
 
-      {/* ✅ TIMELINE (field visualization) */}
-      <EmotionTimeline data={timeline} />
+      {/* HERO SECTION */}
+      <section className="hero">
+        <div className="bg-layer" />
+        <div className="avatar-wrapper">
+          <Avatar emotion={emotion || "silent"} />
+        </div>
+      </section>
 
-      {/* ✅ MESSAGE SYSTEM */}
-      <MessageList messages={messages} />
-      <EmotionInput onSubmit={submitText} />
+      {/* REVEAL SECTION */}
+      <section className="reveal">
+        <div className="content-wrapper">
+          <EmotionTimeline data={timeline} />
+          <MessageList messages={messages} />
+          <EmotionInput onSubmit={submitText} />
+        </div>
+      </section>
 
-      {/* ✅ DEBUG PANEL (DEV only) */}
       {import.meta.env.DEV && (
         <EmotionDebug emotion={emotion} field={emotionField} />
       )}
+
     </div>
   );
 }
+
