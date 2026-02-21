@@ -5,7 +5,7 @@
   position: relative;
   width: 767px;
   height: 847px;
-  margin: auto;
+  /* No margin—positioning handled by wrapper; scale via transform in index.css */
 }
 
 /* =========================================

@@ -1,9 +1,9 @@
-import Avatar from "./components/Avatar/Avatar";
-import EmotionInput from "./components/EmotionInput";
-import MessageList from "./components/MessageList";
-import EmotionTimeline from "./components/EmotionTimeline";
-import EmotionDebug from "./components/EmotionDebug";
 import { useEmotionController } from "./controllers/useEmotionController";
+import Avatar from "./components/Avatar/Avatar";
+import EmotionTimeline from "./components/EmotionTimeline";
+import MessageList from "./components/MessageList";
+import EmotionInput from "./components/EmotionInput";
+import EmotionDebug from "./components/EmotionDebug";
 
 export default function App() {
   const {
@@ -15,30 +15,28 @@ export default function App() {
   } = useEmotionController();
 
   return (
-    <div className="app-container">
-
-      {/* HERO SECTION */}
-      <section className="hero">
-        <div className="bg-layer" />
-        <div className="avatar-wrapper">
-          <Avatar emotion={emotion || "silent"} />
+    <>
+      {/* FIXED SCENE — Fixed-ratio canvas (3061.77 × 2090) for exact Figma alignment */}
+      <div className="scene-layer">
+        <div className="scene-canvas">
+          <div className="bg-layer" />
+          <div className="avatar-wrapper">
+            <Avatar emotion={emotion || "silent"} />
+          </div>
         </div>
-      </section>
+      </div>
 
-      {/* REVEAL SECTION */}
-      <section className="reveal">
-        <div className="content-wrapper">
+      {/* SCROLL LAYER */}
+      <div className="scroll-layer">
+        <div className="ui-content">
           <EmotionTimeline data={timeline} />
           <MessageList messages={messages} />
           <EmotionInput onSubmit={submitText} />
+          {import.meta.env.DEV && (
+            <EmotionDebug emotion={emotion} field={emotionField} />
+          )}
         </div>
-      </section>
-
-      {import.meta.env.DEV && (
-        <EmotionDebug emotion={emotion} field={emotionField} />
-      )}
-
-    </div>
+      </div>
+    </>
   );
 }
-
