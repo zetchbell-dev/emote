@@ -69,61 +69,62 @@ body {
 
 
 /* =========================================
-   TIMELINE HUD STYLE
+   TIMELINE HUD STYLE (75% SCALE)
 ========================================= */
 
 .timeline-container {
   position: fixed;
-  top: 20px;
-  left: 20px;
+  top: 6px;      /* 75% of 20px */
+  left: 6px;     /* 75% of 20px */
   z-index: 5;
 
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px); /* slightly reduced */
   background: rgba(0, 0, 0, 0.35);
-  padding: 10px 12px;
-  border-radius: 10px;
+  padding: 7px 9px;           /* 75% of 10px 12px */
+  border-radius: 7px;         /* 75% of 10px */
 
   border: 1px solid rgba(255, 255, 255, 0.05);
+
+  transform: scale(0.75);
+  transform-origin: top left;
 }
 
 .timeline-heading {
-  font-size: 9px;
-  letter-spacing: 1.5px;
+  font-size: 10px;             /* 75% of 9px */
+  letter-spacing: 1px;
   text-transform: uppercase;
-  opacity: 0.4;
-  margin-bottom: 6px;
+  opacity: 0.6  ;
+  margin-bottom: 4px;         /* 75% of 6px */
 }
 
-.timeline-svg {
-  display: block;
-  opacity: 0.85;
-}
+
+
 
 
 
 /* =========================================
-   DEBUG PANEL — CINEMATIC STYLE
+   DEBUG PANEL — CINEMATIC STYLE (80% SIZE)
 ========================================= */
 
 .debug {
   position: fixed;
-  top: 20px;
-  right: 20px;
+  top: 6px;           /* 80% of 20px */
+  right: 6px;         /* 80% of 20px */
   z-index: 10;
 
-  backdrop-filter: blur(10px);
+  backdrop-filter: blur(8px);
   background: rgba(0, 0, 0, 0.4);
 
-  padding: 16px 18px;
-  border-radius: 14px;
+  padding: 13px 14px;  /* 80% of 16px 18px */
+  border-radius: 11px; /* 80% of 14px */
 
   border: 1px solid rgba(255, 255, 255, 0.08);
-  min-width: 180px;
+  min-width: 144px;    /* 80% of 180px */
 }
 
 .debug-title {
-  font-size: 12px;
-  margin-bottom: 10px;
+  font-size: 10px;     /* 80% of 12px */
+  margin-bottom: 8px;  /* 80% of 10px */
   opacity: 0.8;
 }
 
@@ -135,13 +136,13 @@ body {
 .debug-field {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 5px;            /* 80% of 6px */
 }
 
 .debug-row {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 9px;      /* 80% of 11px */
   opacity: 0.75;
 }
 
@@ -153,22 +154,25 @@ body {
   font-family: monospace;
   opacity: 0.85;
 }
-
-
 /* =========================================
    CINEMATIC INPUT
 ========================================= */
 
+/* =========================================
+   CINEMATIC INPUT (FIXED + 75%)
+========================================= */
 .input-container {
-  position: relative;
-  width: 100%;
-  max-width: 520px;
-  margin: 0 auto;
+  position: fixed;
+  bottom: 20px;
+  right: 30px;
+  z-index: 6;
+
+  width: 340px;   /* fixed 75% size */
 }
 
 .emotion-input {
   width: 100%;
-  padding: 14px 90px 14px 18px;
+  padding: 10px 68px 10px 14px;
 
   background: rgba(255, 255, 255, 0.08);
   backdrop-filter: blur(12px);
@@ -177,14 +181,22 @@ body {
   border-radius: 999px;
 
   color: #fff;
-  font-size: 14px;
+  font-size: 11px;
+
+  
+  font-family: "Nohemi", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.04em;
 
   outline: none;
   transition: all 0.25s ease;
 }
 
 .emotion-input::placeholder {
-  color: rgba(255, 255, 255, 0.5);
+  font-family: "Nohemi", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .emotion-input:focus {
@@ -196,11 +208,11 @@ body {
 
 .emotion-send {
   position: absolute;
-  right: 6px;
+  right: 5px;
   top: 50%;
   transform: translateY(-50%);
 
-  padding: 8px 18px;
+  padding: 6px 14px;  /* 75% of original */
   border-radius: 999px;
 
   border: none;
@@ -208,7 +220,10 @@ body {
 
   background: rgba(255, 255, 255, 0.15);
   color: #fff;
-  font-size: 13px;
+  font-size: 10px;
+  font-family: "Nohemi", sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.04em;
 
   transition: background 0.2s ease;
 }
@@ -235,18 +250,15 @@ body {
 ================================ */
 .cinema-messages {
   position: absolute;
-  bottom: 140px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 70%;
-  max-width: 800px;
+  bottom: 90px;      /* adjust if needed */
+  right: 30px;        /* align with input */
+  width: 340px;       /* match input width */
 
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 16px;
+  align-items: center;  /* align text to right */
+  gap: 7px;
 }
-
 .cinema-message {
   font-family: "Nohemi", sans-serif;
   font-weight: 500;
@@ -254,10 +266,18 @@ body {
   color: white;
   text-align: center;
 
-  transition: all 0.6s ease;
+  opacity: 0;
+  transform: translateY(30px) scale(0.98);
+
+  transition:
+    opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+    transform 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-
+.cinema-message.show {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
 /* =========================================
    FIXED SCENE LAYER (MOON + COLUMBINA)
 ========================================= */
