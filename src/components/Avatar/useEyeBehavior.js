@@ -3,7 +3,6 @@ import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { EMOTION_MAP } from "./emotionMap";
 
-
 export function useEyeBehavior({
   eyeRef,
   eye,
@@ -77,8 +76,7 @@ export function useEyeBehavior({
     if (emotion === prevEyeRef.current) return;
 
     const safeMap = EMOTION_MAP[emotion] ?? EMOTION_MAP.silent;
-pendingEyeRef.current = safeMap.eye;
-
+    pendingEyeRef.current = safeMap.eye;
 
     // 🔴 reset timer so blink timing feels natural
     clearTimeout(blinkTimeoutRef.current);
@@ -93,37 +91,62 @@ pendingEyeRef.current = safeMap.eye;
     return () => clearTimeout(blinkTimeoutRef.current);
   }, []);
 
-  /* -----------------------------
-     🔴 GSAP RESET ON EYE CHANGE
-     (THIS FIXES FREEZING)
-  ----------------------------- */
+  /* -----------------------------------------------------------------
+     AMBIENT MICRO-DRIFT — mount-only (Phase 2 fix)
+
+     Previously this ran in an effect keyed on `[eye]`, which meant it
+     was killed and restarted every single time `eye` changed — and
+     `eye` changes on every blink (twice per cycle: to "blink" and
+     back), every 2.8–5s depending on emotion, forever. Each restart
+     snapped the eye back to x:0/y:0 before starting a fresh tween, so
+     the "ambient drift" was actually being cut off and re-started
+     from a hard reset several times a minute — visible as a small but
+     continuous jitter — while also creating/destroying two infinite
+     GSAP tweens on every blink for no behavioral benefit, since the
+     drift itself has nothing to do with which eye asset is showing.
+
+     The `eyeRef` element is a stable DOM node for the lifetime of the
+     Avatar (only its `src`/style change on emotion swaps — see
+     Avatar.jsx, no `key` on the eye <img>), so the drift tween can
+     safely start once on mount and simply keep running underneath
+     whichever eye is currently displayed.
+
+     Also fixes invalid easing: `"cubic-bezier(0.16, 1, 0.3, 1)"` is
+     CSS syntax, not a GSAP ease — GSAP's ease parser only understands
+     its own named eases (or a CustomEase instance). Passing a raw
+     cubic-bezier string doesn't error, it just silently falls back to
+     GSAP's default ease, so this drift was never actually using the
+     intended slow-settling curve. `"expo.out"` is the closest built-in
+     GSAP equivalent to that curve (the same ease popularized as
+     "easeOutExpo") without adding a CustomEase dependency.
+  ----------------------------------------------------------------- */
   useEffect(() => {
     if (!eyeRef.current) return;
 
-    // kill previous motion
-    gsap.killTweensOf(eyeRef.current);
-    gsap.set(eyeRef.current, {
-      clearProps: "transform",
-      x: 0,
-      y: 0,
-    });
+    gsap.set(eyeRef.current, { clearProps: "transform", x: 0, y: 0 });
 
-    // horizontal micro drift
-    gsap.to(eyeRef.current, {
+    // Two independent tweens with different periods (2.8s / 2s) so the
+    // combined motion doesn't look like a simple back-and-forth loop —
+    // kept as separate tweens (not one timeline) specifically so their
+    // periods stay independent of each other.
+    const driftX = gsap.to(eyeRef.current, {
       x: "+=0.2",
       duration: 2.8,
       repeat: -1,
       yoyo: true,
-      ease: "cubic-bezier(0.16, 1, 0.3, 1)",
+      ease: "expo.out",
     });
-
-    // vertical micro drift
-    gsap.to(eyeRef.current, {
+    const driftY = gsap.to(eyeRef.current, {
       y: "+=0.6",
       duration: 2,
       repeat: -1,
       yoyo: true,
-      ease: "cubic-bezier(0.16, 1, 0.3, 1)",
+      ease: "expo.out",
     });
-  }, [eye]); // 🔒 REQUIRED
+
+    return () => {
+      driftX.kill();
+      driftY.kill();
+    };
+  }, [eyeRef]);
 }

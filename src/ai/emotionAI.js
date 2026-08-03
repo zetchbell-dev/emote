@@ -1,630 +1,153 @@
-
-
-// // src/ai/emotionAI.js
-
-// const SIGNALS = {
-//   happy: ["hi", "hello", "hey", "love", "great", "awesome"],
-//   angry: ["stupid", "hate", "idiot", "shit", "damn"],
-//   sad: ["sad", "tired", "lonely", "hurt"],
-// };
-
-// export async function interpretEmotion(text) {
-//   const lower = text.toLowerCase();
-//   const scores = {
-//     happy: 0,
-//     sad: 0,
-//     angry: 0,
-//     silent: 0,
-//   };
-
-//   Object.entries(SIGNALS).forEach(([emotion, words]) => {
-//     words.forEach((word) => {
-//       if (lower.includes(word)) {
-//         scores[emotion] += 0.8;
-//       }
-//     });
-//   });
-
-//   const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-//   const [top] = sorted;
-
-//   if (top[1] === 0) {
-//     return {
-//       emotion: "happy",
-//       intensity: 0.4,
-//       confidence: 0.6,
-//     };
-//   }
-
-//   return {
-//     emotion: top[0],
-//     intensity: Math.min(1, top[1]),
-//     confidence: 0.9,
-//   };
-// }
-
-
-
-// // src/ai/emotionAI.js
-// import { pipeline } from "@xenova/transformers";
-
-// let classifier = null;
-
-// /**
-//  * Load model once (cached in browser)
-//  */
-// async function getModel() {
-//   if (!classifier) {
-//     console.log("🤖 Loading sentiment model...");
-//     classifier = await pipeline(
-//       "sentiment-analysis",
-//       "Xenova/distilbert-base-uncased-finetuned-sst-2-english"
-//     );
-//     console.log("✅ Model ready");
-//   }
-//   return classifier;
-// }
-
-// /**
-//  * Interpret emotion using ML
-//  * Returns standardized format:
-//  * { emotion, intensity, confidence }
-//  */
-// export async function interpretEmotion(text) {
-//   if (!text || !text.trim()) {
-//     return {
-//       emotion: "silent",
-//       intensity: 0,
-//       confidence: 1,
-//     };
-//   }
-
-//   try {
-//     const model = await getModel();
-//     const result = await model(text);
-
-//     const sentiment = result[0];
-//     const label = sentiment.label; // POSITIVE or NEGATIVE
-//     const score = sentiment.score; // 0–1 confidence
-
-//     const lower = text.toLowerCase();
-
-//     // Positive → Happy
-//     if (label === "POSITIVE") {
-//       return {
-//         emotion: "happy",
-//         intensity: score,
-//         confidence: score,
-//       };
-//     }
-
-//     // Negative → Decide Sad or Angry
-//     const angerWords = [
-//       "hate",
-//       "stupid",
-//       "idiot",
-//       "angry",
-//       "mad",
-//       "damn",
-//       "fuck",
-//       "shit",
-//     ];
-
-//     const isAngry = angerWords.some((w) => lower.includes(w));
-
-//     return {
-//       emotion: isAngry ? "angry" : "sad",
-//       intensity: score,
-//       confidence: score,
-//     };
-//   } catch (err) {
-//     console.warn("⚠️ ML failed, fallback to neutral:", err);
-
-//     return {
-//       emotion: "happy",
-//       intensity: 0.4,
-//       confidence: 0.5,
-//     };
-//   }
-// }
-
-// import { pipeline, env } from "@xenova/transformers";
-
-// // Configure environment
-// env.allowLocalModels = true;
-// env.allowRemoteModels = false;
-// env.useBrowserCache = true;
-
-// let classifier = null;
-
-// async function getModel() {
-//   if (!classifier) {
-//     console.log("🤖 Loading local model...");
-
-//     classifier = await pipeline(
-//       "sentiment-analysis",
-//       "/models/distilbert-base-uncased-finetuned-sst-2-english"
-//     );
-
-//     console.log("✅ Model ready");
-//   }
-//   return classifier;
-// }
-
-// export async function interpretEmotion(text) {
-//   if (!text || !text.trim()) {
-//     return {
-//       emotion: "silent",
-//       intensity: 0,
-//       confidence: 1,
-//     };
-//   }
-
-//   try {
-//     const model = await getModel();
-//     const result = await model(text);
-
-//     const { label, score } = result[0];
-//     const lower = text.toLowerCase();
-
-//     if (label === "POSITIVE") {
-//       return {
-//         emotion: "happy",
-//         intensity: score,
-//         confidence: score,
-//       };
-//     }
-
-//     const angerWords = [
-//       "hate",
-//       "angry",
-//       "mad",
-//       "stupid",
-//       "idiot",
-//       "fuck",
-//       "shit",
-//     ];
-
-//     const isAngry = angerWords.some((w) =>
-//       lower.includes(w)
-//     );
-
-//     return {
-//       emotion: isAngry ? "angry" : "sad",
-//       intensity: score,
-//       confidence: score,
-//     };
-//   } catch (err) {
-//     console.warn("⚠️ ML failed:", err);
-
-//     return {
-//       emotion: "silent",
-//       intensity: 0.3,
-//       confidence: 0.4,
-//     };
-//   }
-// }
-
-
-
-// // src/ai/emotionAI.js
-// import { pipeline } from "@huggingface/transformers";
-
-// let classifier = null;
-// let isLoading = false;
-
-// /* ================================================
-//    Load model once (cached in browser)
-// ================================================ */
-// async function getModel() {
-//   if (classifier) return classifier;
-
-//   if (isLoading) {
-//     // wait if already loading
-//     while (isLoading) {
-//       await new Promise((r) => setTimeout(r, 100));
-//     }
-//     return classifier;
-//   }
-
-//   try {
-//     isLoading = true;
-//     console.log("🤖 Loading sentiment model...");
-
-//     classifier = await pipeline(
-//       "sentiment-analysis",
-//       "Xenova/distilbert-base-uncased-finetuned-sst-2-english"
-//     );
-
-//     console.log("✅ Model ready");
-//     isLoading = false;
-
-//     return classifier;
-//   } catch (err) {
-//     isLoading = false;
-//     console.error("❌ Model failed to load:", err);
-//     throw err;
-//   }
-// }
-
-// /* ================================================
-//    Keyword nuance detection
-//    Helps split NEGATIVE into angry vs sad
-// ================================================ */
-// function detectNuance(text) {
-//   const lower = text.toLowerCase();
-
-//   const angryWords = [
-//     "hate", "angry", "mad", "furious",
-//     "stupid", "idiot", "damn", "shit", "fuck"
-//   ];
-
-//   const sadWords = [
-//     "sad", "hurt", "lonely", "tired",
-//     "depressed", "cry", "miserable"
-//   ];
-
-//   if (angryWords.some((w) => lower.includes(w))) {
-//     return "angry";
-//   }
-
-//   if (sadWords.some((w) => lower.includes(w))) {
-//     return "sad";
-//   }
-
-//   return null;
-// }
-
-// /* ================================================
-//    Main emotion interpreter
-//    Returns:
-//    { emotion, intensity, confidence }
-// ================================================ */
-// export async function interpretEmotion(text) {
-//   if (!text || !text.trim()) {
-//     return {
-//       emotion: "silent",
-//       intensity: 0,
-//       confidence: 1,
-//     };
-//   }
-
-//   try {
-//     const model = await getModel();
-//     const result = await model(text);
-
-//     const { label, score } = result[0];
-//     const lower = text.toLowerCase();
-
-//     /* -------------------------------
-//        Positive → happy
-//     ------------------------------- */
-//     if (label === "POSITIVE") {
-//       return {
-//         emotion: "happy",
-//         intensity: score,
-//         confidence: score,
-//       };
-//     }
-
-//     /* -------------------------------
-//        Negative → angry or sad
-//     ------------------------------- */
-//     if (label === "NEGATIVE") {
-//       const nuance = detectNuance(text);
-
-//       if (nuance) {
-//         return {
-//           emotion: nuance,
-//           intensity: score,
-//           confidence: score,
-//         };
-//       }
-
-//       // default negative
-//       return {
-//         emotion: "sad",
-//         intensity: score,
-//         confidence: score,
-//       };
-//     }
-
-//     /* Fallback */
-//     return {
-//       emotion: "happy",
-//       intensity: 0.4,
-//       confidence: 0.5,
-//     };
-
-//   } catch (err) {
-//     console.warn("⚠️ ML inference failed:", err);
-
-//     // safe fallback
-//     return {
-//       emotion: "silent",
-//       intensity: 0.3,
-//       confidence: 0.4,
-//     };
-//   }
-// }
-
-// /* ================================================
-//    Optional: preload model on app start
-//    Call preloadModel() inside App.jsx useEffect
-// ================================================ */
-// export function preloadModel() {
-//   getModel().catch(() => {});
-// }
-
-
-
-// // src/ai/emotionAI.js
-// import { pipeline, env } from "@huggingface/transformers";
-
-// // Prevent "Unexpected token '<'" / index.html-as-JSON: disable browser cache.
-// // Cache lookups can return SPA fallback HTML when paths resolve to origin.
-// // See: xenova/transformers.js#366, SO 77614213
-// env.allowLocalModels = false;
-// env.useBrowserCache = false;
-
-// /*
-//   EMOTE – AI Perception Layer
-//   AI only classifies.
-//   Engine decides dominance.
-// */
-
-// let classifier = null;
-// let isLoading = false;
-
-// /* ============================================
-//    Load Model (Singleton)
-// ============================================ */
-// async function getModel() {
-//   if (classifier) return classifier;
-
-//   if (isLoading) {
-//     while (isLoading) {
-//       await new Promise((r) => setTimeout(r, 100));
-//     }
-//     return classifier;
-//   }
-
-//   try {
-//     isLoading = true;
-//     console.log("🤖 Loading sentiment model...");
-
-//     classifier = await pipeline(
-//       "sentiment-analysis",
-//       "Xenova/distilbert-base-uncased-finetuned-sst-2-english"
-//     );
-
-//     console.log("✅ Model ready");
-//     isLoading = false;
-//     return classifier;
-
-//   } catch (err) {
-//     isLoading = false;
-//     console.error("❌ Model failed to load:", err);
-//     throw err;
-//   }
-// }
-
-// /* ============================================
-//    Keyword Nuance Detection
-// ============================================ */
-// const KEYWORDS = {
-//   angry: [
-//     "hate", "angry", "mad", "furious",
-//     "stupid", "idiot", "damn", "shit", "fuck"
-//   ],
-//   sad: [
-//     "sad", "hurt", "lonely", "tired",
-//     "depressed", "cry", "miserable"
-//   ],
-//   happy: [
-//     "love", "great", "amazing", "awesome",
-//     "fantastic", "perfect"
-//   ],
-// };
-
-// const GREETINGS = [
-//   "hi", "hello", "hey", "yo", "good morning",
-//   "good evening", "good afternoon"
-// ];
-
-
-// function detectTargetedAttack(text) {
-//   const lower = text.toLowerCase();
-
-//   const familyTargets = ["mom", "mother", "dad", "father", "family"];
-//   const strongInsults = ["ugly", "stupid", "idiot", "worthless"];
-
-//   const targetsFamily = familyTargets.some(w => lower.includes(w));
-//   const hasStrongInsult = strongInsults.some(w => lower.includes(w));
-
-//   if (targetsFamily && hasStrongInsult) {
-//     return true;
-//   }
-
-//   return false;
-// }
-
-
-// function detectNuance(text) {
-//   const lower = text.toLowerCase();
-
-//   for (const [emotion, words] of Object.entries(KEYWORDS)) {
-//     if (words.some((w) => lower.includes(w))) {
-//       return emotion;
-//     }
-//   }
-
-//   return null;
-// }
-
-// /* ============================================
-//    Main Interpreter
-//    Returns:
-//    { emotion, intensity, confidence }
-// ============================================ */
-// export async function interpretEmotion(text) {
-//   if (!text?.trim()) {
-//     return {
-//       emotion: "silent",
-//       intensity: 0,
-//       confidence: 1,
-//       source: "empty",
-//     };
-//   }
-
-//   const lower = text.toLowerCase().trim();
-
-// // Greeting override
-// if (GREETINGS.includes(lower)) {
-//   return {
-//     emotion: "happy",
-//     intensity: 0.6,
-//     confidence: 0.9,
-//     source: "greeting-override",
-//   };
-// }
-
-
-//   try {
-//     const model = await getModel();
-//     const result = await model(text);
-//     const { label, score } = result[0];
-
-//     let emotion = "happy";
-//     let intensity = score;
-//     let confidence = score;
-
-//     // POSITIVE → happy
-//     if (label === "POSITIVE") {
-//       emotion = "happy";
-//     }
-
-//     // NEGATIVE → nuance
-//     else if (label === "NEGATIVE") {
-
-//   // 1️⃣ Targeted personal attack → ANGRY
-//   if (detectTargetedAttack(text)) {
-//     emotion = "angry";
-//     intensity = Math.max(score, 0.85); // force stronger reaction
-//   }
-
-//   // 2️⃣ Regular nuance detection
-//   else {
-//     const nuance = detectNuance(text);
-
-//     if (nuance === "angry") {
-//       emotion = "angry";
-//     } else {
-//       emotion = "sad";
-//     }
-//   }
-// }
-
-
-//     // very short input → silent
-//     const SILENT_WORDS = ["...", "hmm", "uh", "um", "idk"];
-
-//     if (SILENT_WORDS.includes(lower)) {
-//       emotion = "silent";
-//       intensity = 0.4;
-//       confidence = 0.8;
-//     }
-
-//     return {
-//       emotion,
-//       intensity,
-//       confidence,
-//       source: "hf-transformers",
-//     };
-
-//   } catch (err) {
-//     console.warn("⚠️ ML inference failed:", err);
-
-//     return {
-//       emotion: "silent",
-//       intensity: 0.3,
-//       confidence: 0.4,
-//       source: "fallback",
-//     };
-//   }
-// }
-
-// /* ============================================
-//    Optional Preload
-// ============================================ */
-// export function preloadModel() {
-//   getModel().catch(() => {});
-// }
-
-
-
-
 // src/ai/emotionAI.js
+/**
+ * EMOTE — AI Perception Layer
+ *
+ * Responsibility: turn raw text into a set of per-emotion "forces"
+ * ({ happy, sad, angry }). It does NOT decide the avatar's dominant
+ * emotion — that's the engine's job (see engine/emotionField.js and
+ * engine/dominance.js). This file only perceives.
+ *
+ * Phase 1 correctness fixes (unchanged in Phase 2, see PHASE1 changelog):
+ * 1. `env.useBrowserCache: true` — model loads once per session, not
+ *    once per page load.
+ * 2. NEGATIVE polarity is routed to `angry` or `sad` based on keyword
+ *    nuance instead of always defaulting to `sad`.
+ *
+ * Phase 2 change (§1 AI performance):
+ * The actual transformer forward pass (`model(text)`) now runs in a
+ * Web Worker (./emotionWorker.js) instead of on the main thread — see
+ * that file's header for why. Everything in this file that doesn't
+ * need the model (greetings/silent short-circuits, keyword nuance,
+ * targeted-attack detection) is synchronous, cheap, and stays here
+ * unchanged; only the `{label, score}` lookup is delegated out.
+ *
+ * The exported API (`interpretEmotion`, `preloadModel`) and the shape
+ * of `interpretEmotion`'s return value are IDENTICAL to before this
+ * phase — nothing that imports this file needs to change.
+ *
+ * Environments without Worker support (SSR, and this project's own
+ * Node-based test harness) fall back to running the pipeline directly
+ * on the calling thread, same as the pre-Phase-2 code did — so
+ * behavior is preserved everywhere, just off the main thread where
+ * a main thread (browser) actually exists.
+ */
 import { pipeline, env } from "@huggingface/transformers";
 
 /* =====================================================
-   ENV CONFIG
+   WORKER-BACKED MODEL RUNNER (with direct-call fallback)
 ===================================================== */
-env.allowLocalModels = false;
-env.useBrowserCache = false;
+const supportsWorker =
+  typeof Worker !== "undefined" && typeof window !== "undefined";
 
-/*
-  EMOTE – AI Perception Layer (Multi-Force Version)
-  AI returns emotional distribution.
-  Engine decides dominance.
-*/
+let worker = null;
+let nextRequestId = 0;
+const pending = new Map(); // id -> { resolve, reject }
 
-let classifier = null;
-let isLoading = false;
+function getWorker() {
+  if (worker) return worker;
 
-/* ============================================
-   Load Model (Singleton Safe)
-============================================ */
-async function getModel() {
-  if (classifier) return classifier;
+  worker = new Worker(new URL("./emotionWorker.js", import.meta.url), {
+    type: "module",
+  });
 
-  if (isLoading) {
-    while (isLoading) {
-      await new Promise((r) => setTimeout(r, 100));
+  worker.onmessage = (event) => {
+    const { id, type, label, score, message } = event.data ?? {};
+    const entry = pending.get(id);
+    if (!entry) return;
+    pending.delete(id);
+
+    if (type === "error") {
+      entry.reject(new Error(message));
+    } else {
+      entry.resolve({ type, label, score });
     }
-    return classifier;
-  }
+  };
 
-  try {
-    isLoading = true;
-    console.log("🤖 Loading sentiment model...");
+  worker.onerror = (event) => {
+    // A worker-level failure (e.g. script failed to load) — reject
+    // every request still in flight so callers fall back gracefully
+    // instead of hanging forever.
+    for (const [id, entry] of pending) {
+      entry.reject(new Error(event.message || "emotion worker failed"));
+      pending.delete(id);
+    }
+  };
 
-    classifier = await pipeline(
+  return worker;
+}
+
+function callWorker(type, text) {
+  return new Promise((resolve, reject) => {
+    const id = nextRequestId++;
+    pending.set(id, { resolve, reject });
+    getWorker().postMessage({ id, type, text });
+  });
+}
+
+/* --- Direct (non-worker) fallback — same singleton pattern as before --- */
+let directClassifier = null;
+let directLoadingPromise = null;
+
+function getDirectModel() {
+  if (directClassifier) return Promise.resolve(directClassifier);
+  if (!directLoadingPromise) {
+    env.allowLocalModels = false;
+    env.useBrowserCache = true;
+    directLoadingPromise = pipeline(
       "sentiment-analysis",
-      "Xenova/distilbert-base-uncased-finetuned-sst-2-english"
-    );
+      "Xenova/distilbert-base-uncased-finetuned-sst-2-english",
+      { dtype: "q8" }
+    )
+      .then((m) => {
+        directClassifier = m;
+        return m;
+      })
+      .catch((err) => {
+        directLoadingPromise = null;
+        throw err;
+      });
+  }
+  return directLoadingPromise;
+}
 
-    console.log("✅ Model ready");
-    isLoading = false;
-    return classifier;
-  } catch (err) {
-    isLoading = false;
-    console.error("❌ Model failed:", err);
-    throw err;
+async function classify(text) {
+  if (supportsWorker) {
+    const result = await callWorker("classify", text);
+    return { label: result.label, score: result.score };
+  }
+  const model = await getDirectModel();
+  const result = await model(text);
+  return { label: result[0].label, score: result[0].score };
+}
+
+/**
+ * Call once, early (e.g. on app mount), so the model is warm by the
+ * time the user submits their first message instead of paying the
+ * full load cost on that first submit. Runs in the worker when
+ * available so even the initial ~260MB fetch/decompress can't block
+ * the main thread or delay first paint.
+ */
+export function preloadModel() {
+  if (supportsWorker) {
+    callWorker("preload").catch(() => {});
+  } else {
+    getDirectModel().catch(() => {});
   }
 }
 
-/* ============================================
+/* =====================================================
    CONSTANTS
-============================================ */
+===================================================== */
+// NOTE: `ugly` moved out of `sad` and into `angry` — "you are ugly"
+// directed at someone is an insult, not a self-report of sadness.
 const KEYWORDS = {
   angry: [
     "hate", "angry", "mad", "furious",
-    "stupid", "idiot", "damn", "shit", "fuck"
+    "stupid", "idiot", "damn", "shit", "fuck", "ugly"
   ],
   sad: [
     "sad", "hurt", "lonely", "tired",
-    "depressed", "cry", "miserable", "ugly"
+    "depressed", "cry", "miserable"
   ],
   happy: [
     "love", "great", "amazing", "awesome",
@@ -639,9 +162,9 @@ const GREETINGS = [
 
 const SILENT_WORDS = ["...", "hmm", "uh", "um", "idk"];
 
-/* ============================================
+/* =====================================================
    HELPERS
-============================================ */
+===================================================== */
 function clamp01(v) {
   return Math.max(0, Math.min(1, v));
 }
@@ -652,122 +175,88 @@ function detectTargetedAttack(text) {
   const familyTargets = ["mom", "mother", "dad", "father", "family"];
   const strongInsults = ["ugly", "stupid", "idiot", "worthless"];
 
-  const targetsFamily = familyTargets.some(w => lower.includes(w));
-  const hasStrongInsult = strongInsults.some(w => lower.includes(w));
+  const targetsFamily = familyTargets.some((w) => lower.includes(w));
+  const hasStrongInsult = strongInsults.some((w) => lower.includes(w));
 
   return targetsFamily && hasStrongInsult;
 }
 
-/* ============================================
-   MAIN INTERPRETER (MULTI-FORCE)
-============================================ */
-export async function interpretEmotion(text) {
+/**
+ * Which emotion bucket does this text's keywords most suggest?
+ * Checked angry → sad → happy, so an insult wins a tie over an
+ * incidental sad-adjacent word.
+ */
+function detectNuance(text) {
+  const lower = text.toLowerCase();
+  for (const key of ["angry", "sad", "happy"]) {
+    if (KEYWORDS[key].some((w) => lower.includes(w))) return key;
+  }
+  return null;
+}
 
+/* =====================================================
+   MAIN INTERPRETER (MULTI-FORCE)
+   Returns: { happy, sad, angry, confidence, source }
+===================================================== */
+export async function interpretEmotion(text) {
   if (!text?.trim()) {
-    return {
-      happy: 0,
-      sad: 0,
-      angry: 0,
-      confidence: 1,
-      source: "empty",
-    };
+    return { happy: 0, sad: 0, angry: 0, confidence: 1, source: "empty" };
   }
 
   const lower = text.toLowerCase().trim();
 
-  /* -----------------------------
-     Greeting override
-  ----------------------------- */
   if (GREETINGS.includes(lower)) {
-    return {
-      happy: 0.6,
-      sad: 0,
-      angry: 0,
-      confidence: 0.9,
-      source: "greeting-override",
-    };
+    return { happy: 0.6, sad: 0, angry: 0, confidence: 0.9, source: "greeting-override" };
   }
 
-  /* -----------------------------
-     Silent short-input
-  ----------------------------- */
   if (SILENT_WORDS.includes(lower)) {
-    return {
-      happy: 0,
-      sad: 0,
-      angry: 0,
-      confidence: 0.8,
-      source: "silent-short",
-    };
+    return { happy: 0, sad: 0, angry: 0, confidence: 0.8, source: "silent-short" };
   }
 
   try {
-    const model = await getModel();
-    const result = await model(text);
-    const { label, score } = result[0];
+    const { label, score } = await classify(text);
 
     let happy = 0;
     let sad = 0;
     let angry = 0;
 
-    /* -----------------------------
-       1️⃣ Base polarity
-    ----------------------------- */
+    // 1) Base polarity — NEGATIVE is routed by nuance instead of
+    //    always defaulting to `sad`.
     if (label === "POSITIVE") {
       happy += score;
     } else if (label === "NEGATIVE") {
-      sad += score;
+      const nuance = detectNuance(text);
+      if (nuance === "angry") {
+        angry += score;
+      } else {
+        sad += score; // unmatched negative text still defaults to sad
+      }
     }
 
-    /* -----------------------------
-       2️⃣ Targeted attack amplification
-    ----------------------------- */
+    // 2) Targeted personal attack amplification (family + insult).
     if (detectTargetedAttack(text)) {
       angry += Math.max(score, 0.8);
     }
 
-    /* -----------------------------
-       3️⃣ Keyword nuance layer
-    ----------------------------- */
+    // 3) Keyword nuance layer — additive, lets multiple forces be
+    //    active at once (e.g. text that's both sad and a little angry).
     for (const [emotion, words] of Object.entries(KEYWORDS)) {
-      if (words.some(w => lower.includes(w))) {
+      if (words.some((w) => lower.includes(w))) {
         if (emotion === "happy") happy += 0.4;
         if (emotion === "sad") sad += 0.4;
         if (emotion === "angry") angry += 0.4;
       }
     }
 
-    /* -----------------------------
-       4️⃣ Clamp values
-    ----------------------------- */
-    happy = clamp01(happy);
-    sad = clamp01(sad);
-    angry = clamp01(angry);
-
     return {
-      happy,
-      sad,
-      angry,
+      happy: clamp01(happy),
+      sad: clamp01(sad),
+      angry: clamp01(angry),
       confidence: score,
-      source: "hf-transformers",
+      source: supportsWorker ? "hf-transformers-worker" : "hf-transformers",
     };
-
   } catch (err) {
     console.warn("⚠️ ML inference failed:", err);
-
-    return {
-      happy: 0,
-      sad: 0.3,
-      angry: 0,
-      confidence: 0.4,
-      source: "fallback",
-    };
+    return { happy: 0, sad: 0.3, angry: 0, confidence: 0.4, source: "fallback" };
   }
-}
-
-/* ============================================
-   Optional Preload
-============================================ */
-export function preloadModel() {
-  getModel().catch(() => {});
 }

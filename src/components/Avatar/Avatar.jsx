@@ -16,6 +16,32 @@ export default function Avatar({ emotion = "silent" }) {
   const [eye, setEye] = useState(map.eye);
   const [lip, setLip] = useState(map.lip);
 
+  // Phase 2 (§5 rendering): eagerly warm the browser's image cache for
+  // every eye/lip SVG variant on mount, instead of only fetching each
+  // one lazily the first time its emotion is reached via a <img src>
+  // swap. Without this, the *first* transition into any given emotion
+  // (e.g. the first time "angry" is reached in a session) pays a
+  // network+decode cost mid-animation, which can show as a brief flash
+  // or pop. All these files are small SVGs, so preloading all of them
+  // up front is cheap and removes that first-use stall entirely.
+  useEffect(() => {
+    const urls = [
+      ...Object.keys(EYES).map((key) => `/svg/eyes/${key}-eye.svg`),
+      ...Object.keys(LIPS).map((key) => `/svg/lips/${key}-lip.svg`),
+    ];
+    const images = urls.map((src) => {
+      const img = new Image();
+      img.src = src;
+      return img;
+    });
+    // Nothing to clean up — letting the browser cache hold onto these
+    // is the entire point. Keeping the array alive until unmount just
+    // avoids the (harmless) chance of GC dropping an in-flight request.
+    return () => {
+      images.length = 0;
+    };
+  }, []);
+
   // 🔑 PROP → VISUAL SYNC
   useEffect(() => {
     const safeMap = EMOTION_MAP[emotion] ?? EMOTION_MAP.silent;

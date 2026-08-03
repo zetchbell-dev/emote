@@ -78,7 +78,12 @@ function transitionLipZoom(el, fromEmotion, toEmotion) {
     x: to.x,
     y: to.y,
     duration: ZOOM_DURATION[toEmotion] ?? 0.3,
-    ease: "cubic-bezier(0.16, 1, 0.3, 1)",
+    // Phase 2: was "cubic-bezier(0.16, 1, 0.3, 1)" — CSS syntax, not a
+    // valid GSAP ease string. GSAP doesn't error on an unrecognized
+    // ease, it just silently falls back to its default, so this zoom
+    // was never actually using the intended slow-settling curve.
+    // "expo.out" is the closest built-in GSAP match for that curve.
+    ease: "expo.out",
     onComplete: () => {
       // subtle organic settle (only for heavy emotions)
       if (toEmotion === "angry" || toEmotion === "silent") {
@@ -141,7 +146,10 @@ const to = safeMap.lip;
           scaleY: 1,
           scaleX: 1,
           duration: 0.6, // slow, heavy
-          ease: "cubic-bezier(0.12, 0.8, 0.2, 1)",
+          // Was an invalid cubic-bezier string (see note above) —
+          // "power4.out" is the closest built-in match for the
+          // original curve's fast-start, hard-decelerate shape.
+          ease: "power4.out",
           onComplete: () => {
             // 4️⃣ emotional weight
             transitionLipZoom(el, from, "angry");
@@ -171,7 +179,10 @@ const to = safeMap.lip;
         scaleY: 0.15,
         scaleX: 0.85,
         duration: 0.22, // decisive release
-        ease: "cubic-bezier(0.3, 0, 0.7, 1)",
+        // Was an invalid cubic-bezier string (see note above) —
+        // "power2.inOut" is the closest built-in match for the
+        // original symmetric ease-in/ease-out shape.
+        ease: "power2.inOut",
         onComplete: () => {
           // 2️⃣ full reset (prevents invisible lips)
           resetLip(el);

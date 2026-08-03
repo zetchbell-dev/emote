@@ -1,4 +1,6 @@
+import { useEffect } from "react";
 import { useEmotionController } from "./controllers/useEmotionController";
+import { preloadModel } from "./ai/emotionAI";
 import Avatar from "./components/Avatar/Avatar";
 import EmotionTimeline from "./components/EmotionTimeline";
 import MessageList from "./components/MessageList";
@@ -13,6 +15,13 @@ export default function App() {
     submitText,
     timeline,
   } = useEmotionController();
+
+  // Warm the sentiment model as soon as the app mounts, instead of
+  // paying the full load cost on the user's first submitted message
+  // (see audit §1.2 — preloadModel existed but was never called).
+  useEffect(() => {
+    preloadModel();
+  }, []);
 
   return (
     <>

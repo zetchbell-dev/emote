@@ -275,7 +275,9 @@ body {
 }
 
 .cinema-message.show {
-  opacity: 1;
+  /* Older messages set --stack-opacity inline (progressive fade by
+     age); default to 1 for safety if it's ever unset. */
+  opacity: var(--stack-opacity, 1);
   transform: translateY(0) scale(1);
 }
 /* =========================================

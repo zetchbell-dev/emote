@@ -1,29 +1,9 @@
-// // src/config/emotionConfig.js
-
-// export const EMOTION_CONFIG = {
-
-//   DECAY_RATE: 0.96,
-//   DECAY_INTERVAL_MS: 2000,
-//   TIME_DECAY_FACTOR: 0.85,
-
-//   DOMINANCE_THRESHOLD: 0.12,
-//   HYSTERESIS_THRESHOLD: 0.08,
-
-//   GAIN_MULTIPLIER: {
-//     happy: 0.7,
-//     sad: 1.0,
-//     angry: 1.0,
-//     silent: 0.6,
-//   },
-
-//   MIN_CONFIDENCE_TO_CHANGE: 0.7,
-
-//   EMOTION_LOCK_DURATION: 900,
-// };
-
-
 // src/config/emotionConfig.js
-
+/**
+ * Central tuning knobs for the emotion engine.
+ * Consumed by: engine/emotionField.js, engine/composite.js,
+ * engine/dominance.js, engine/clampEmotion.js.
+ */
 export const EMOTION_CONFIG = {
   /* FIELD DYNAMICS */
   TIME_DECAY_FACTOR: 0.95,
@@ -35,34 +15,38 @@ export const EMOTION_CONFIG = {
     angry: 1.0,
   },
 
+  /* DOMINANCE SELECTION */
   DOMINANCE_THRESHOLD: 0.12,
   HYSTERESIS_THRESHOLD: 0.08,
+  // A composite must beat the strongest base emotion by this factor
+  // before it's allowed to become the displayed dominant emotion.
+  // This is what stops composites from steamrolling a correct plain
+  // happy/sad/angry reading (audit §2.1).
+  DOMINANCE_MARGIN: 1.05,
+
   MIN_CONFIDENCE_TO_CHANGE: 0.7,
   EMOTION_LOCK_DURATION: 900,
 
-  /* COMPOSITE THRESHOLDS */
+  /* COMPOSITE EMOTIONS */
+  // How strongly overlap between base emotions gets amplified into a
+  // composite value. 0 = raw overlap only, 1 = the original (too
+  // aggressive — routinely saturated to 1.0, see audit) behavior.
+  COMPOSITE_BLEND_STRENGTH: 0.4,
+
+  // Minimum *normalized* share (proportion of total emotional energy,
+  // not raw magnitude) each input needs before a composite is even
+  // considered. This was already defined before the refactor but
+  // never actually read by the engine — it's wired in now via
+  // engine/composite.js.
   COMPOSITE_THRESHOLD: {
-  // Strong sadness + strong anger
-  disgust: { sad: 0.45, angry: 0.45 },
-
-  // High sadness + medium anger
-  anxious: { sad: 0.50, angry: 0.30 },
-
-  // High anger + medium sadness
-  frustrated: { angry: 0.50, sad: 0.30 },
-
-  // Happiness + sadness tension
-  bittersweet: { happy: 0.40, sad: 0.40 },
-
-  // Light happy + rising anger
-  sarcastic: { happy: 0.35, angry: 0.45 },
-
-  // All elevated
-  overwhelmed: { happy: 0.35, sad: 0.35, angry: 0.35 },
-
-  conflicted: { happy: 0.30, sad: 0.30, angry: 0.30 },
-},
-
+    disgust: { sad: 0.45, angry: 0.45 },
+    anxious: { sad: 0.50, angry: 0.30 },
+    frustrated: { angry: 0.50, sad: 0.30 },
+    bittersweet: { happy: 0.40, sad: 0.40 },
+    sarcastic: { happy: 0.35, angry: 0.45 },
+    overwhelmed: { happy: 0.35, sad: 0.35, angry: 0.35 },
+    conflicted: { happy: 0.30, sad: 0.30, angry: 0.30 },
+  },
 
   /* TIMELINE */
   TIMELINE_INTERVAL: 1000,
