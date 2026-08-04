@@ -49,8 +49,8 @@ function scaleY(value) {
       </div>
 
       <svg
-        width={width}
-        height={height}
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="xMidYMid meet"
         className="timeline-svg"
       >
         <path d={buildPath("happy")} stroke="#4CAF50" strokeWidth="1.5" fill="none" />

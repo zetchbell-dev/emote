@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 /**
  * A single cinematic message bubble. Owns its own "has this entered
@@ -35,11 +35,20 @@ function CinemaMessage({ text, fontSize, stackOpacity }) {
     <div
       className={`cinema-message${show ? " show" : ""}`}
       style={{
-        fontSize: `${fontSize}px`,
-        // Consumed by .cinema-message.show in index.css. Kept as a CSS
-        // variable (rather than the old inline `opacity`) specifically
-        // so it never fights with the .show class for control of the
-        // opacity property — see MessageList.jsx history / issue #1.
+        // `fontSize` is still the base px value computed by the
+        // untouched progressive size-step logic below (newest
+        // biggest, oldest smallest). It's passed through as a CSS
+        // variable and multiplied by --hud-text-scale in the style
+        // attribute (rather than hardcoded as `${fontSize}px`) so
+        // message text resizes along with the rest of the HUD
+        // instead of staying a fixed pixel size regardless of
+        // window size.
+        "--msg-base-size": fontSize,
+        fontSize: `calc(var(--msg-base-size) * 1px * var(--hud-text-scale))`,
+        // Kept as a CSS variable (rather than an inline `opacity`)
+        // specifically so it never fights with the .show class for
+        // control of the opacity property — see MessageList.jsx
+        // history / issue #1.
         "--stack-opacity": stackOpacity,
       }}
     >
@@ -51,8 +60,22 @@ function CinemaMessage({ text, fontSize, stackOpacity }) {
 export default function MessageList({ messages = [] }) {
   const maxVisible = 5;
 
+  // Owns the scrollable region so newly-added messages are always
+  // brought into view. This is the one piece of layout logic the new
+  // architecture needed that the old fake-scroll page didn't: with a
+  // real `overflow-y: auto` container, the browser does NOT auto-stick
+  // to the bottom on its own when content is appended, so we do it
+  // explicitly whenever the message count changes.
+  const scrollRef = useRef(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [messages.length]);
+
   return (
-    <div className="cinema-messages">
+    <div className="message-scroll" ref={scrollRef}>
       {messages.map((msg, index) => {
         const total = messages.length;
         const distanceFromLast = total - 1 - index;
