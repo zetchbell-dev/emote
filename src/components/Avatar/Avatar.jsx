@@ -12,18 +12,14 @@ export default function Avatar({ emotion = "silent" }) {
   // Safe fallback: use silent if emotion not in map (prevents crash on composite emotions)
   const map = EMOTION_MAP[emotion] ?? EMOTION_MAP.silent;
 
-  // visual-only state
-  const [eye, setEye] = useState(map.eye);
+  // lip is still local, visual-only state (unchanged)
   const [lip, setLip] = useState(map.lip);
 
-  // Phase 2 (§5 rendering): eagerly warm the browser's image cache for
-  // every eye/lip SVG variant on mount, instead of only fetching each
-  // one lazily the first time its emotion is reached via a <img src>
-  // swap. Without this, the *first* transition into any given emotion
-  // (e.g. the first time "angry" is reached in a session) pays a
-  // network+decode cost mid-animation, which can show as a brief flash
-  // or pop. All these files are small SVGs, so preloading all of them
-  // up front is cheap and removes that first-use stall entirely.
+  // Eagerly warm the browser's image cache for every eye/lip SVG
+  // variant on mount, instead of only fetching each one lazily the
+  // first time its emotion is reached via a <img src> swap. All these
+  // files are small SVGs, so preloading up front removes any
+  // first-use network/decode stall.
   useEffect(() => {
     const urls = [
       ...Object.keys(EYES).map((key) => `/svg/eyes/${key}-eye.svg`),
@@ -34,25 +30,21 @@ export default function Avatar({ emotion = "silent" }) {
       img.src = src;
       return img;
     });
-    // Nothing to clean up — letting the browser cache hold onto these
-    // is the entire point. Keeping the array alive until unmount just
-    // avoids the (harmless) chance of GC dropping an in-flight request.
     return () => {
       images.length = 0;
     };
   }, []);
 
-  // 🔑 PROP → VISUAL SYNC
+  // 🔑 PROP → VISUAL SYNC (lip only — eye is owned end-to-end by
+  // useEyeBehavior, which decides when the emotion→eye swap happens
+  // relative to the blink cycle. Avatar.jsx never calls setEye.)
   useEffect(() => {
     const safeMap = EMOTION_MAP[emotion] ?? EMOTION_MAP.silent;
-    setEye(safeMap.eye);
     setLip(safeMap.lip);
   }, [emotion]);
 
-  useEyeBehavior({
+  const { eye } = useEyeBehavior({
     eyeRef,
-    eye,
-    setEye,
     emotion,
   });
 
