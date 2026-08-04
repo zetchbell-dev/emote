@@ -82,7 +82,7 @@ body {
 
   background-image:
     linear-gradient(to bottom, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0.18) 55%, rgba(0, 0, 0, 0.42) 100%),
-    url("/background-columbina.png");
+    url("/background-columbina.avif");
   background-size: 100% 100%, cover;
   /* Sample the moon/water band (~55% down the source image), not the
      near-black sky at 15% — that's WHY the previous version was
@@ -113,7 +113,7 @@ body {
 .bg-layer {
   position: absolute;
   inset: 0;
-  background-image: url("/background-columbina.png");
+  background-image: url("/background-columbina.avif");
   background-size: 100% 100%;
   background-repeat: no-repeat;
   background-position: top left;
