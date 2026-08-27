@@ -2,12 +2,12 @@
 /**
  * Final gate between "what does the field suggest" and "what do we
  * actually show." Two protections:
- *  - Composite → base transitions require higher confidence, so a
- *    brief confidence dip doesn't collapse a composite expression
- *    back to a plain base one.
- *  - A couple of hand-tuned base-to-base smoothing rules (e.g. don't
- *    jump straight from happy to angry; route through sad instead)
- *    so transitions read as gradual rather than jarring.
+ *  - Composite → base: require higher confidence, so a brief
+ *    confidence dip doesn't collapse a composite expression back to
+ *    a plain base one.
+ *  - Base → base transitions pass through dominance.js's own verdict
+ *    unchanged; see the CALIBRATION FIX note below for why a prior
+ *    hardcoded happy->angry->sad reroute was removed rather than kept.
  *
  * NOTE: an earlier audit pass flagged `"silent"` in BASE_EMOTIONS as
  * possibly unreachable since it's not a key in the emotion *field*.
@@ -42,14 +42,23 @@ export function clampEmotion(current, next, confidence) {
     return next;
   }
 
-  // Base emotion smoothing — avoid jarring direct jumps.
-  // Phase 4: removed the "silent" branch of this rule (audit/Phase3 §2.2).
-  // "silent" is the app's rest state, not an established emotion to jar
-  // away from, so routing a session's first hostile message through "sad"
-  // had no smoothing rationale -- it just silently misreported it. The
-  // happy->angry case is left unchanged; it IS a defensible anti-jar rule
-  // between two genuinely-established emotions.
-  if (current === "happy" && next === "angry") return "sad";
+  // Base emotion smoothing.
+  // CALIBRATION FIX (transition audit): this used to also force
+  // happy->angry through "sad" — but that rule fired unconditionally,
+  // even when dominance.js had already computed a clean, decisive
+  // angry win (see the audit trace: happy=0.748 vs angry=1.000, no
+  // ambiguity). It wasn't smoothing an ambiguous call, it was
+  // discarding a correct one and substituting a label the field never
+  // computed — that's what produced the reported Happy -> Sad -> Angry
+  // sequence, compounded by EMOTION_LOCK_DURATION holding the wrong
+  // state on screen for 900ms before the engine could re-evaluate and
+  // correct it. dominance.js's DOMINANCE_THRESHOLD/HYSTERESIS_THRESHOLD
+  // already are the general-purpose "don't jar on a near-tie"
+  // mechanism; a same-emotion hardcoded override on top of that is
+  // redundant when the call is decisive and wrong when it overrides a
+  // correct one. Removed rather than reconditioned, per the audit's
+  // "smallest possible change" scope — there was no case in the trace
+  // where this rule was doing correct, load-bearing work.
 
   return next;
 }

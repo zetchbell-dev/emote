@@ -4,6 +4,22 @@
  *
  * Runs Hugging Face Transformers.js in a dedicated worker so model
  * loading and inference never block the UI thread.
+ *
+ * BUGFIX (runtime crash — TypeError: Cannot read properties of
+ * undefined (reading 'length') at emotionAI.js's `scores.length`):
+ * this file was still running the Phase 1 binary sentiment model
+ * (`Xenova/distilbert-base-uncased-finetuned-sst-2-english`,
+ * single top-1 `{label, score}` result) and posting that back as
+ * `{id, type: "result", label, score}`, while emotionAI.js's main
+ * thread (Phase 2/3) was already reading `event.data.scores` — a
+ * key this file never sent — from every worker response. That
+ * `undefined` propagated: worker.onmessage → classify()'s
+ * `result.scores` → interpretEmotion()'s `scores` → the crash.
+ * Fixed by moving this file onto the same 28-label GoEmotions model
+ * and `scores`-array message shape emotionAI.js's direct (non-worker)
+ * fallback already used — the worker and direct paths were meant to
+ * be behaviorally identical (see emotionAI.js's file header), they'd
+ * just drifted out of sync.
  */
 
 import { pipeline, env } from "@huggingface/transformers";
@@ -30,8 +46,8 @@ let loadingPromise = null;
  */
 async function createPipeline() {
   const args = [
-    "sentiment-analysis",
-    "Xenova/distilbert-base-uncased-finetuned-sst-2-english",
+    "text-classification",
+    "SamLowe/roberta-base-go_emotions-onnx",
     { dtype: "q8" },
   ];
 
@@ -105,16 +121,21 @@ self.onmessage = async (event) => {
       case "classify": {
         const model = await getModel();
 
-        const result = await model(text);
+        // top_k: null → every label's independent score (multi-label
+        // GoEmotions), matching what emotionAI.js's direct-call
+        // fallback already requests and what computeForces()/
+        // computeEdge() expect to receive.
+        const scores = await model(text, { top_k: null });
 
-        const { label, score } = result[0];
+        // TEMPORARY DEBUG LOG (1): exact model output before postMessage.
+        console.log("[emotionWorker.js] model output:", JSON.stringify(scores));
 
-        self.postMessage({
-          id,
-          type: "result",
-          label,
-          score,
-        });
+        const payload = { id, type: "result", scores };
+
+        // TEMPORARY DEBUG LOG (2): exact object passed to postMessage().
+        console.log("[emotionWorker.js] postMessage payload:", JSON.stringify(payload));
+
+        self.postMessage(payload);
         break;
       }
 

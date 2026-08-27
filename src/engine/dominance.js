@@ -13,7 +13,12 @@
 import { EMOTION_CONFIG } from "../config/emotionConfig";
 import { normalizeBase } from "./composite";
 
-const { DOMINANCE_THRESHOLD, HYSTERESIS_THRESHOLD, DOMINANCE_MARGIN } = EMOTION_CONFIG;
+const {
+  DOMINANCE_THRESHOLD,
+  HYSTERESIS_THRESHOLD,
+  DOMINANCE_MARGIN,
+  DOMINANCE_MARGIN_OVERRIDES = {},
+} = EMOTION_CONFIG;
 
 const BASE_KEYS = ["happy", "sad", "angry"];
 
@@ -36,7 +41,11 @@ export function getDominantEmotion(field, current) {
   const candidates = { ...normalizedBase };
   for (const [key, value] of Object.entries(field)) {
     if (BASE_KEYS.includes(key)) continue;
-    candidates[key] = value >= topBaseValue * DOMINANCE_MARGIN ? value : 0;
+    // Per-key margin where measured data justifies one (see
+    // DOMINANCE_MARGIN_OVERRIDES in emotionConfig.js); the global
+    // DOMINANCE_MARGIN otherwise, unchanged from before.
+    const margin = DOMINANCE_MARGIN_OVERRIDES[key] ?? DOMINANCE_MARGIN;
+    candidates[key] = value >= topBaseValue * margin ? value : 0;
   }
 
   const sorted = Object.entries(candidates).sort((a, b) => b[1] - a[1]);
