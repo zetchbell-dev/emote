@@ -1,0 +1,82 @@
+EMOTE SOURCE-AVAILABLE LICENSE
+Version 1.0 — 2026
+
+Copyright (c) 2026 Zetchbell
+
+1. PERMITTED USE
+
+Permission is granted to any person obtaining a copy of the original
+source code of the EMOTE project (the "Software") to:
+
+- View and study the source code for educational purposes.
+- Use the Software as a reference for learning software engineering,
+  artificial intelligence, NLP, emotion detection, animation systems,
+  React development, and related concepts.
+- Modify the Software for personal, non-commercial experimentation and
+  learning.
+- Create personal, non-commercial derivative works for educational
+  purposes.
+
+2. RESTRICTIONS
+
+Without prior written permission from the copyright holder, you may NOT:
+
+- Use the Software or substantial portions of it for commercial
+  purposes.
+- Repackage, redistribute, sell, sublicense, or publish the Software as
+  another application, product, library, framework, template, or service.
+- Copy substantial portions of the Software into another project for
+  the purpose of creating or distributing a substantially similar
+  application.
+- Present substantial portions of the Software or its architecture as
+  your own original work.
+- Remove or alter copyright, attribution, or license notices.
+
+3. ATTRIBUTION
+
+If you publicly reference, demonstrate, or create a permitted derivative
+work based substantially on the Software, you must provide clear
+attribution to the original EMOTE project and its author, Zetchbell.
+
+Attribution does not grant permission for uses otherwise prohibited by
+this license.
+
+4. THIRD-PARTY SOFTWARE
+
+Third-party libraries, frameworks, models, and dependencies included
+or referenced by the project are NOT covered by this license.
+
+They remain subject to their respective licenses and terms.
+
+5. THIRD-PARTY CHARACTER AND ART ASSETS
+
+This license does NOT grant ownership or licensing rights to third-party
+characters, artwork, images, logos, trademarks, backgrounds, or other
+intellectual property included in the EMOTE demonstration.
+
+The visual character used by the demonstration is based on third-party
+intellectual property associated with Genshin Impact / HoYoverse.
+
+No ownership of that third-party intellectual property is claimed by
+the EMOTE project or by the author of this license.
+
+Such third-party assets are excluded from the permissions granted by
+this license and remain subject to their respective intellectual
+property rights and terms.
+
+6. NO WARRANTY
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED.
+
+THE AUTHOR SHALL NOT BE LIABLE FOR ANY CLAIM, DAMAGES, OR OTHER
+LIABILITY ARISING FROM THE USE OF THE SOFTWARE.
+
+7. OTHER PERMISSIONS
+
+Any permission not expressly granted by this license is reserved by
+the copyright holder.
+
+Requests for additional permissions, including commercial use,
+redistribution, or licensing of substantial portions of the Software,
+may be directed to the copyright holder.
