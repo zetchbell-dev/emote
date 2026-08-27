@@ -64,4 +64,25 @@ node --experimental-loader ./scripts/resolve-ext.mjs scripts/full-engine-evaluat
 
 ## License
 
-TBD.
+Original source code created for EMOTE is provided under the
+[EMOTE Source-Available License](LICENSE).
+
+The license permits the source code to be studied, referenced, and
+modified for personal, non-commercial educational purposes.
+
+Commercial use, redistribution, repackaging, sublicensing, or substantial
+reuse of the source code to create another application or product
+requires prior permission from the copyright holder.
+
+### Third-Party Assets
+
+The source-code license does not grant rights to third-party characters,
+artwork, images, logos, trademarks, or other intellectual property
+included in the project.
+
+The current EMOTE demonstration uses visual assets based on third-party
+intellectual property associated with Genshin Impact / HoYoverse.
+EMOTE does not claim ownership of that third-party intellectual property.
+
+Third-party software, models, libraries, and assets remain subject to
+their respective licenses and terms.
