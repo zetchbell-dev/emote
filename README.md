@@ -2,6 +2,25 @@
 
 A React + Vite app that renders an animated SVG avatar whose facial expression reflects the emotional tone of typed text in real time — driven by a hybrid three-stage pipeline (transformer classification → deterministic composite/dominance engine → an independent linguistic-cue layer), not a single sentiment call.
 
+![EMOTE Demo](./.github/assets/emote-demo.gif)
+
+## What is EMOTE?
+
+EMOTE is an experiment in text-driven facial animation. You type a message, and a layered SVG avatar's eyes and lips update to reflect the emotional tone of what you wrote — not just "positive/negative," but a set of composite emotional states (bittersweet, sarcastic, overwhelmed, and others) derived from a small deterministic engine sitting on top of a transformer classifier.
+
+It isn't a chatbot — there's no reply generation. The focus is the perception → decision → animation pipeline: how raw text becomes a stable, non-flickering facial expression.
+
+## Features
+
+- **Real-time text-to-emotion interaction** — type a message and the avatar's expression updates immediately.
+- **Animated SVG avatar** — layered eye/lip/body SVGs, transitions driven by GSAP.
+- **Hybrid emotion pipeline** — transformer classification feeding a deterministic composite/dominance engine, not a single sentiment score.
+- **Composite emotions** — 7 derived states (`bittersweet`, `disgust`, `anxious`, `frustrated`, `sarcastic`, `conflicted`, `overwhelmed`) built from the 3 base emotions, each gated behind tuned thresholds.
+- **Linguistic cue detection** — an independent pattern-based layer that catches things a lexical classifier structurally can't (sarcasm, repetition-based frustration, hedged anxiety, enumeration-length overwhelm).
+- **Emotion timeline** — a running visualization of the emotion field over time.
+- **Web Worker inference** — model loading and every forward pass run off the main thread.
+- **Debug panel (F2)** — toggleable view into the live emotion field and dominant/composite state.
+
 ## How it works
 
 **1. Perception** (`src/ai/emotionAI.js`, `src/ai/emotionWorker.js`)
@@ -31,12 +50,22 @@ A React + Vite app that renders an animated SVG avatar whose facial expression r
 - `src/hooks/useEmotionHistory.js` — samples the emotion field on a steady interval for the timeline view, decoupled from how often the field itself updates.
 - `App.jsx` — assembles the avatar scene, HUD (timeline + optional debug panel, toggled with F2), and chat input/message list.
 
-## Running locally
+## Tech Stack
+
+- React 19 + Vite
+- JavaScript
+- `@huggingface/transformers` running the GoEmotions ONNX model
+- GSAP for avatar animation
+- Web Workers for off-main-thread inference
+
+## Running Locally
 
 ```bash
 npm install
 npm run dev
 ```
+
+No specific Node.js version is pinned in `package.json`; a recent LTS release is recommended.
 
 ## Testing
 
@@ -55,7 +84,7 @@ node --experimental-loader ./scripts/resolve-ext.mjs scripts/full-engine-evaluat
 
 **Important caveat on the 55.3% figure:** the full evaluation harness feeds precomputed, synthetic GoEmotions-shaped `{label, score}` arrays directly into `computeForces`/`computeEdge`, bypassing `interpretEmotion()` — and therefore the entire linguistic-cue layer — entirely. This is why `sarcastic`, `anxious`, `disgust`, and `overwhelmed` all score at or near 0% in that harness: it isn't exercising the mechanism specifically built to catch those. **55.3% is an accurate measurement of the transformer-plus-composite path in isolation, not a measurement of the live app's real end-to-end accuracy**, which also runs the cue layer on every submitted message. See the harness script's own header comment for the full rationale, and treat any future public accuracy claim accordingly.
 
-## Known gaps / open items
+## Known Gaps / Open Items
 
 - `zustand` is a declared dependency (`package.json`) with no current usage found in `src/` — either dead weight to remove, or a planned piece not yet wired in.
 - No automated test runner (Vitest, etc.) — both harnesses above are run manually via `node --experimental-loader`.
@@ -81,7 +110,10 @@ artwork, images, logos, trademarks, or other intellectual property
 included in the project.
 
 The current EMOTE demonstration uses visual assets based on third-party
-intellectual property associated with Genshin Impact / HoYoverse.
+intellectual property associated with Genshin Impact / HoYoverse. This
+includes the avatar artwork under `public/svg/` (`eyes/`, `lips/`,
+`body.svg`, `skin.svg`) and the background images
+(`public/background-columbina.png`, `public/background-columbina.avif`).
 EMOTE does not claim ownership of that third-party intellectual property.
 
 Third-party software, models, libraries, and assets remain subject to

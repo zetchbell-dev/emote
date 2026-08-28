@@ -106,17 +106,75 @@ export function useLipBehavior({ emotion, lipRef, setLip }) {
   const prevEmotionRef = useRef(emotion);
   const isAnimatingRef = useRef(false);
 
+  // Root-cause note (found + proven via an isolated Playwright harness
+  // that drove this hook directly and inspected the live DOM node):
+  //
+  // The HAPPY/SAD/SILENT -> ANGRY branch used to call `setLip("angry")`
+  // and *then* immediately animate the `el` captured at the top of the
+  // effect. But the lip <img> is keyed by `lip` (see Avatar.jsx), so
+  // React unmounts the outgoing element and mounts a brand-new one on
+  // that state change instead of mutating it in place — `el` still
+  // pointed at the OUTGOING node. Instrumenting the hook confirmed
+  // this directly: by the time the tween's onComplete fired, the
+  // animated `el` had `isConnected: false` and was a different node
+  // from the live `lipRef.current` (`sameNode: false`). The real,
+  // visible lip element never received any transform — it sat at the
+  // CSS default for the *entire* open animation and the
+  // emotional-weight zoom meant to follow it, indefinitely (nothing
+  // later corrects it; only a *different* lip-category transition
+  // happens to touch the element again). That's the confirmed cause
+  // of angry lips losing their open animation/zoom, and — because it
+  // left this branch's bookkeeping (prevEmotionRef/isAnimatingRef)
+  // internally consistent even though the visual never happened — of
+  // subsequent transitions inheriting an already-wrong visual
+  // baseline.
+  //
+  // Fix: defer this branch's element work to requestAnimationFrame and
+  // re-read lipRef.current there, exactly like the ANGRY -> X and
+  // default branches below already do for their own post-setLip step.
+  // That guarantees we always grab the freshly-mounted node.
+
+  // Second, separate issue also confirmed by the harness: while
+  // isAnimatingRef is true, an emotion change arriving mid-transition
+  // used to hit a bare `return` with no record of what was requested.
+  // Once the in-flight transition's onComplete eventually fired, it
+  // committed prevEmotionRef to *its own* stale target, not to
+  // whatever the latest real emotion was — so that change was lost
+  // outright, and the lip could sit on a stale category until some
+  // later, unrelated transition happened to touch it. pendingEmotionRef
+  // queues the most recent emotion seen while busy; once the in-flight
+  // transition finishes, it's drained so the lip always converges on
+  // the latest requested emotion instead of silently dropping it.
+  const pendingEmotionRef = useRef(null);
+
   useEffect(() => {
+    if (isAnimatingRef.current) {
+      pendingEmotionRef.current = emotion;
+      return;
+    }
+    runTransition(emotion);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [emotion]);
+
+  function drainPending() {
+    if (pendingEmotionRef.current === null) return;
+    const next = pendingEmotionRef.current;
+    pendingEmotionRef.current = null;
+    runTransition(next);
+  }
+
+  function runTransition(targetEmotion) {
     const el = lipRef.current;
     if (!el) return;
 
-    if (isAnimatingRef.current) return;
-
     const from = prevEmotionRef.current;
-    const safeMap = EMOTION_MAP[emotion] ?? EMOTION_MAP.silent;
-const to = safeMap.lip;
+    const safeMap = EMOTION_MAP[targetEmotion] ?? EMOTION_MAP.silent;
+    const to = safeMap.lip;
 
-    if (from === to) return;
+    if (from === to) {
+      drainPending();
+      return;
+    }
 
     /* =============================================
        HAPPY / SAD / SILENT → ANGRY
@@ -128,37 +186,51 @@ const to = safeMap.lip;
     ) {
       isAnimatingRef.current = true;
 
-      // 1️⃣ mount angry lip
+      // 1️⃣ mount angry lip. This only *schedules* the swap (the <img>
+      // is keyed by `lip`, so React replaces the node rather than
+      // mutating it) — the actual new element isn't committed until
+      // after this synchronous block finishes.
       setLip("angry");
 
-      // 2️⃣ full safety reset
-      resetLip(el);
-
-      // 3️⃣ angry open (shape only)
-      gsap.fromTo(
-        el,
-        {
-          scaleY: 0.15,
-          scaleX: 0.85,
-          transformOrigin: "center center",
-        },
-        {
-          scaleY: 1,
-          scaleX: 1,
-          duration: 0.6, // slow, heavy
-          // Was an invalid cubic-bezier string (see note above) —
-          // "power4.out" is the closest built-in match for the
-          // original curve's fast-start, hard-decelerate shape.
-          ease: "power4.out",
-          onComplete: () => {
-            // 4️⃣ emotional weight
-            transitionLipZoom(el, from, "angry");
-
-            prevEmotionRef.current = to;
-            isAnimatingRef.current = false;
-          },
+      // 2️⃣ + 3️⃣ run the reset + shape-open animation on the
+      // freshly-mounted angry element once React has actually
+      // committed it, instead of the stale pre-swap `el`.
+      requestAnimationFrame(() => {
+        const newEl = lipRef.current;
+        if (!newEl) {
+          isAnimatingRef.current = false;
+          drainPending();
+          return;
         }
-      );
+
+        resetLip(newEl);
+
+        gsap.fromTo(
+          newEl,
+          {
+            scaleY: 0.15,
+            scaleX: 0.85,
+            transformOrigin: "center center",
+          },
+          {
+            scaleY: 1,
+            scaleX: 1,
+            duration: 0.6, // slow, heavy
+            // Was an invalid cubic-bezier string (see note above) —
+            // "power4.out" is the closest built-in match for the
+            // original curve's fast-start, hard-decelerate shape.
+            ease: "power4.out",
+            onComplete: () => {
+              // 4️⃣ emotional weight
+              transitionLipZoom(newEl, from, "angry");
+
+              prevEmotionRef.current = to;
+              isAnimatingRef.current = false;
+              drainPending();
+            },
+          }
+        );
+      });
       return;
     }
 
@@ -199,6 +271,7 @@ const to = safeMap.lip;
 
           prevEmotionRef.current = to;
           isAnimatingRef.current = false;
+          drainPending();
         },
       });
       return;
@@ -218,5 +291,6 @@ const to = safeMap.lip;
     });
 
     prevEmotionRef.current = to;
-  }, [emotion]);
+    drainPending();
+  }
 }
